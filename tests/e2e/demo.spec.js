@@ -41,11 +41,20 @@ test('a walk through the demo drive', async ({ page }) => {
   await expect(videos).toHaveText(`Videos ${videosBytes}`);
   await page.mouse.move(0, 0);
 
-  // Clicking a folder (its border) zooms into it; the breadcrumb follows.
+  // Clicking anywhere inside a top-level folder enters it, one level per click.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const [topFolder] = (await page.locator('#status-folders').textContent()).split('/');
+  expect(topFolder, 'the centre of the treemap is inside a folder').not.toBe('');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  const crumbs = page.locator('#crumbs > button, #crumbs > .current');
+  await expect(crumbs).toHaveText(['My Drive', topFolder]);
+  await page.keyboard.press('Escape');
+  await expect(crumbs).toHaveText(['My Drive']);
+
+  // Clicking a folder's border enters it too; the breadcrumb follows.
   const photos = await findTile(page, { name: 'Photos', folders: '' });
   expect(photos, 'a point on the Photos folder').not.toBeNull();
   await page.mouse.click(photos.x, photos.y);
-  const crumbs = page.locator('#crumbs > button, #crumbs > .current');
   await expect(crumbs).toHaveText(['My Drive', 'Photos']);
   await expect(page.locator('#crumbs .open')).toHaveText('Open in Drive ↗');
 

@@ -381,6 +381,11 @@ function draw() {
   const outlined = state.hoveredKind
     ? tiles.filter((t) => t.isLeaf && !t.isDirectory && t.smallFiles === 0 && t.bytes > 0 && t.kind === state.hoveredKind)
     : state.hovered != null ? [tiles[state.hovered]] : [];
+  // The folder a click would enter, when the pointer is somewhere inside it.
+  if (!state.hoveredKind && state.hovered != null) {
+    const top = tiles[topLevelIndex(state.hovered)];
+    if (top !== tiles[state.hovered] && top.isDirectory) strokeInside(top, 'rgba(255, 255, 255, 0.8)');
+  }
   // On a hovered folder this exactly repaints its border in white.
   for (const tile of outlined) strokeInside(tile, 'white');
 }
@@ -429,8 +434,7 @@ canvas.addEventListener('mousemove', (event) => {
   const index = pointerTile(event);
   if (index === state.hovered) return;
   state.hovered = index;
-  const tile = index != null ? tiles[index] : null;
-  canvas.style.cursor = tile && (tile.node?.link || tile.isDirectory || tile.smallFiles) ? 'pointer' : 'default';
+  canvas.style.cursor = clickAction(index) ? 'pointer' : 'default';
   draw();
   renderStatus();
 });
@@ -441,20 +445,25 @@ canvas.addEventListener('mouseleave', () => {
   renderStatus();
 });
 
-// Folders (their border, or their block when too small to subdivide) zoom in; the small-files
-// tile zooms into its folder; files open in Drive, as quicker-look reveals them in Finder.
-canvas.addEventListener('click', (event) => {
-  const index = pointerTile(event);
-  if (index == null) return;
-  const tile = tiles[index];
-  if (tile.isDirectory && tile.node) {
-    zoomTo(tile.node);
-  } else if (tile.smallFiles > 0) {
-    if (tile.parent > 0) zoomTo(tiles[tile.parent].node);
-  } else if (tile.node?.link) {
-    window.open(tile.node.link, '_blank', 'noopener');
-  }
-});
+/** The current folder's child that holds tile `index` (the tile itself when it is one). */
+function topLevelIndex(index) {
+  while (tiles[index].parent > 0) index = tiles[index].parent;
+  return index;
+}
+
+/**
+ * What a click on tile `index` does: anywhere inside a folder enters that folder, one level per
+ * click; a file right in the current folder opens in Drive, as quicker-look reveals it in Finder.
+ */
+function clickAction(index) {
+  if (index == null) return null;
+  const top = tiles[topLevelIndex(index)];
+  if (top.isDirectory && top.node) return () => zoomTo(top.node);
+  if (top.smallFiles === 0 && top.node?.link) return () => window.open(top.node.link, '_blank', 'noopener');
+  return null;
+}
+
+canvas.addEventListener('click', (event) => clickAction(pointerTile(event))?.());
 
 document.addEventListener('keydown', (event) => {
   if ($('panel').hidden || event.target.closest?.('input, textarea')) return;

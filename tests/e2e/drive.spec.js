@@ -108,7 +108,14 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await expect(page.locator('#total-bytes')).toHaveText('4.7 GB');
   expect(await findTile(page, { name: 'old.zip' })).toBeNull();
 
-  // Clicking a file opens it in Drive.
+  // Clicking a file inside a folder enters the folder; Escape comes back.
+  const video = await findTile(page, { name: 'video.mp4', folders: 'Projects/' });
+  await page.mouse.click(video.x, video.y);
+  await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['My Drive', 'Projects']);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#crumbs .current')).toHaveText('My Drive');
+
+  // Clicking a file right in the current folder opens it in Drive.
   const report = await findTile(page, { name: 'report.pdf', folders: '' });
   const popup = page.waitForEvent('popup');
   await page.mouse.click(report.x, report.y);

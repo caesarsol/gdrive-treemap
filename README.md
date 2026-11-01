@@ -21,8 +21,9 @@ web allows them.
 - **Show trashed files**: trash counts against the quota, so it is included by default. Toggling it
   switches instantly between two prebuilt trees (quicker-look's "Show hidden files").
 - **Shallow**: draws the current folder's children as single blocks.
-- **Zoom**: click a folder (its border, or its block) to zoom in; the breadcrumb, `Esc` or `Backspace` go
-  back up. Click a file to open it in Drive (quicker-look's "Show in Finder").
+- **Zoom**: click anywhere inside a folder to enter it, one level per click (the folder a click would
+  enter is outlined while hovering); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
+  sits right in the current folder to open it in Drive (quicker-look's "Show in Finder").
 - **Progressive loading**: the treemap fills in while Drive is listed, 1,000 items per request.
 - **Elsewhere**: files you own that sit in someone else's folder (or in no folder) still use your quota;
   they are gathered under a virtual folder so the total adds up.
@@ -79,8 +80,8 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 - Sizes are quota bytes, not allocated disk blocks. Google Docs, Sheets and Slides use no quota and are
   not drawn.
 - "Show hidden files" became "Show trashed files": Drive has no hidden files, but its trash takes space.
-- A click on a folder zooms into it instead of revealing it, since Drives are much larger than the
-  folders Quick Look previews; files open in Drive.
+- A click inside a folder enters it instead of revealing it, since Drives are much larger than the
+  folders Quick Look previews; files of the current folder open in Drive.
 - Icons come from Drive's `iconLink`; there are no content thumbnails (they would need extra requests).
 
 ### Limits
