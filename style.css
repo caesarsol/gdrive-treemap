@@ -1,0 +1,153 @@
+:root {
+  color-scheme: dark;
+  --bg: #1e1e1e;
+  --panel: #262626;
+  --text: #ececec;
+  --secondary: #9a9a9a;
+  --line: #3a3a3a;
+  --accent: #66bfff;
+  --treemap-bg: #141414;
+  --error: #ff6b6b;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.secondary { color: var(--secondary); }
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+button:hover { background: #444; }
+button.primary { background: #0a84ff; border-color: #0a84ff; color: white; }
+button.primary:hover { background: #2793ff; }
+button.link { background: none; border: none; padding: 2px 4px; color: var(--accent); }
+button.link:hover { text-decoration: underline; }
+a { color: var(--accent); }
+
+.chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 600; }
+.account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--secondary); }
+.badge { background: #4a3a10; color: #ffd60a; border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+
+.welcome { max-width: 620px; margin: 8vh auto 0; padding: 0 16px; }
+.welcome h1 { font-size: 26px; margin: 0 0 12px; }
+.welcome p { margin: 0 0 10px; }
+.client-id { display: flex; flex-direction: column; gap: 4px; margin: 20px 0 12px; }
+.client-id input {
+  font: 12px ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--text);
+  background: #151515;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+.client-id small { color: var(--secondary); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.error { color: var(--error); margin-top: 14px; }
+
+/* The Quick Look preview, full window. */
+.panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.header { display: flex; align-items: center; gap: 14px; }
+.folder-icon { width: 56px; height: 56px; flex: none; }
+.titles { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.crumbs { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; font-size: 17px; font-weight: 700; }
+.crumbs button { font-weight: 700; padding: 0; background: none; border: none; color: var(--secondary); }
+.crumbs button:hover { color: var(--text); text-decoration: underline; }
+.crumbs .sep { color: var(--secondary); font-weight: 400; }
+.crumbs .current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crumbs .open { font-size: 12px; font-weight: 400; margin-left: 6px; text-decoration: none; }
+.crumbs .open:hover { text-decoration: underline; }
+.toggles { display: flex; gap: 16px; font-size: 12px; }
+.toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.toggles input { margin: 0; }
+
+.total { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.total .bytes { font: 600 28px ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.total .caption { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--secondary); }
+
+.spinner {
+  width: 12px; height: 12px;
+  border: 2px solid #555; border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.kinds { display: flex; flex-direction: column; gap: 6px; }
+.kind-bar { display: flex; height: 14px; overflow: hidden; }
+.kind-bar div { height: 100%; }
+.kind-bar div.hovered, .kind-legend .hovered .dot { box-shadow: inset 0 0 0 2px white; }
+.kind-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--secondary); }
+.kind-legend > span { display: flex; align-items: center; gap: 5px; white-space: nowrap; cursor: default; }
+.kind-legend .hovered { color: var(--text); }
+.kind-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.treemap {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  background: var(--treemap-bg);
+  border-radius: 6px;
+  overflow: hidden;
+}
+/* Measured and still zero bytes: just an outline, not a black box. */
+.treemap.empty { background: none; box-shadow: inset 0 0 0 2px white; }
+.treemap canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Long paths lose their start, as with truncationMode(.head). */
+.status .path { overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; min-width: 0; }
+.status .path .inner { direction: ltr; unicode-bidi: isolate; }
+
+@media (max-width: 640px) {
+  .header { flex-wrap: wrap; }
+  .folder-icon { width: 40px; height: 40px; }
+  .total { align-items: flex-start; text-align: left; width: 100%; }
+  .total .bytes { font-size: 22px; }
+}
+
+.setup { color: var(--secondary); font-size: 12px; }
+.setup summary { cursor: pointer; color: var(--accent); }
+.setup ol { margin: 8px 0 0; padding-left: 20px; }
+.setup li { margin-bottom: 4px; }
+code { font: 11px ui-monospace, "SF Mono", Menlo, monospace; color: var(--text); }

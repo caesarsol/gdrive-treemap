@@ -1,0 +1,15 @@
+{
+  "name": "drive-treemap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A treemap of the space your files take in Google Drive, entirely in the browser.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs 8080",
+    "test": "node --test tests/unit/*.test.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

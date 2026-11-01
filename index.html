@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drive Treemap</title>
+  <meta name="description" content="See what takes the space in your Google Drive, as a treemap. Runs entirely in your browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='9' height='16' fill='%2366bfff'/%3E%3Crect x='10' width='6' height='9' fill='%2330d158'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%23ffd60a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js"></script>
+  <script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <header class="chrome">
+    <div class="brand">Drive Treemap</div>
+    <div class="account" id="account" hidden>
+      <span class="badge" id="demo-badge" hidden>Demo data</span>
+      <span id="account-name"></span>
+      <span class="quota" id="quota"></span>
+      <button type="button" class="link" id="reload">Reload</button>
+      <button type="button" class="link" id="sign-out">Sign out</button>
+    </div>
+  </header>
+
+  <section class="welcome" id="welcome">
+    <h1>What fills your Google Drive?</h1>
+    <p>A treemap of every file you own in Drive, trash included: each rectangle is as large as the
+      space the file takes from your storage quota.</p>
+    <p class="secondary">Everything runs in this page. It asks Google for read-only access to file
+      names and sizes (never their contents), and nothing leaves your browser.</p>
+    <form id="sign-in-form">
+      <label class="client-id" id="client-id-field">
+        <span>OAuth client ID</span>
+        <input id="client-id" name="client-id" autocomplete="off" spellcheck="false"
+          placeholder="1234567890-abc.apps.googleusercontent.com">
+        <small>A Web application client from Google Cloud Console, with this page's origin
+          (<code id="origin"></code>) among its authorized JavaScript origins.</small>
+      </label>
+      <details class="setup" id="setup">
+        <summary>How to get a client ID</summary>
+        <ol>
+          <li>In <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a>, create or pick a project.</li>
+          <li>APIs &amp; Services → Library: enable the <b>Google Drive API</b>.</li>
+          <li>OAuth consent screen: <i>External</i> (or <i>Internal</i> for Workspace); add the scope
+            <code>drive.metadata.readonly</code>; in <i>Testing</i>, add yourself as a test user.</li>
+          <li>Credentials → Create credentials → OAuth client ID → <b>Web application</b>; add this page's
+            origin under <b>Authorized JavaScript origins</b>. No redirect URI is needed.</li>
+        </ol>
+      </details>
+      <div class="actions">
+        <button type="submit" class="primary" id="sign-in">Sign in with Google</button>
+        <button type="button" id="demo">Try with demo data</button>
+      </div>
+      <p class="error" id="error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <main class="panel" id="panel" hidden>
+    <div class="header">
+      <svg class="folder-icon" viewBox="0 0 56 56" aria-hidden="true">
+        <path d="M4 14a4 4 0 0 1 4-4h13l5 5h22a4 4 0 0 1 4 4v25a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" fill="#66bfff"/>
+        <path d="M4 20h48v24a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" fill="#8fd0ff"/>
+      </svg>
+      <div class="titles">
+        <nav class="crumbs" id="crumbs" aria-label="Folder"></nav>
+        <div class="secondary" id="counts"></div>
+        <div class="toggles">
+          <label><input type="checkbox" id="show-trashed"> Show trashed files</label>
+          <label><input type="checkbox" id="shallow"> Shallow</label>
+        </div>
+      </div>
+      <div class="total">
+        <div class="bytes" id="total-bytes"></div>
+        <div class="caption"><span class="spinner" id="spinner" hidden></span><span id="caption"></span></div>
+      </div>
+    </div>
+    <div class="kinds">
+      <div class="kind-bar" id="kind-bar"></div>
+      <div class="kind-legend" id="kind-legend"></div>
+    </div>
+    <div class="treemap" id="treemap">
+      <canvas id="canvas" aria-label="Treemap of the folder's contents"></canvas>
+    </div>
+    <div class="status" id="status">
+      <span class="path"><span class="inner"><span class="secondary" id="status-folders"></span><span id="status-name">&nbsp;</span></span></span>
+      <span id="status-detail"></span>
+    </div>
+  </main>
+</body>
+</html>
