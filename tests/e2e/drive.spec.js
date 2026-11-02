@@ -3,6 +3,8 @@ import { findTile } from './helpers.js';
 
 const FOLDER = 'application/vnd.google-apps.folder';
 const link = (id) => `https://drive.google.com/file/d/${id}/view`;
+// Links the app opens name the signed-in account, for browsers signed in to several.
+const inAccount = (url) => `${url}?authuser=test%40example.com`;
 const file = (id, name, mimeType, bytes, parent, extra = {}) => ({
   id, name, mimeType, size: String(bytes), quotaBytesUsed: String(bytes), parents: [parent], trashed: false,
   webViewLink: link(id), ...extra,
@@ -108,7 +110,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   // Projects, report.pdf, .Trash (old.zip), Elsewhere and Notes; the folders are Projects and Sub (.Trash and Elsewhere
   // is the app's, not Drive's).
   await expect(page.locator('#counts')).toHaveText('5 items · 6 files · 2 folders');
-  await expect(page.locator('#crumbs .open')).toHaveAttribute('href', 'https://drive.google.com/drive/my-drive');
+  await expect(page.locator('#crumbs .open')).toHaveAttribute('href', inAccount('https://drive.google.com/drive/my-drive'));
   await expect(page.locator('#kind-legend [data-kind]')).toHaveText([
     'Videos 3 GB', 'Documents 1.2 GB', 'Images 500 MB', 'Archives 250 MB',
   ]);
@@ -145,7 +147,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.mouse.click(shared.x, shared.y);
   await expect(page.locator('#crumbs .current')).toHaveText('Team stuff');
   await expect(page.locator('#description')).toContainText('a folder Ada shared with you');
-  await expect(page.locator('#crumbs .open')).toHaveAttribute('href', link('someone-elses-folder'));
+  await expect(page.locator('#crumbs .open')).toHaveAttribute('href', inAccount(link('someone-elses-folder')));
   await page.locator('#crumbs').getByRole('button', { name: 'My Drive' }).click();
   await expect(page.locator('#description')).toBeHidden();
 
@@ -153,7 +155,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   const report = await findTile(page, { name: 'report.pdf', folders: '' });
   const popup = page.waitForEvent('popup');
   await page.mouse.click(report.x, report.y);
-  await expect(await popup).toHaveURL('https://drive.google.com/drive/my-drive');
+  await expect(await popup).toHaveURL(inAccount('https://drive.google.com/drive/my-drive'));
 
   // Reloading within the hour keeps the sign-in: straight back to the drive, with the same token.
   const before = authorizations.length;

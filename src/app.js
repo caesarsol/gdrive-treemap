@@ -338,7 +338,7 @@ function renderHeader() {
   });
   if (current.link) {
     const label = current.id === ACCOUNT_ID ? 'Open in Google One ↗' : 'Open in Drive ↗';
-    crumbs.append(el('a', { className: 'open', href: current.link, target: '_blank', rel: 'noopener', textContent: label }));
+    crumbs.append(el('a', { className: 'open', href: inAccount(current.link), target: '_blank', rel: 'noopener', textContent: label }));
   }
 
   // A folder's usage counts the folder itself; My Drive's already leaves itself out, and virtual
@@ -662,9 +662,30 @@ function clickAction(index) {
   const top = tiles[topLevelIndex(index)];
   if (top.isDirectory && top.node) return () => zoomTo(top.node);
   // The account's blocks: Gmail & Photos opens Google One, the free space does nothing.
-  if (top.node?.virtual) return top.node.link ? () => window.open(top.node.link, '_blank', 'noopener') : null;
+  if (top.node?.virtual) return top.node.link ? () => openInAccount(top.node.link) : null;
   const folder = top.smallFiles === 0 && top.node && folderLinkOf(top.node);
-  return folder ? () => window.open(folder, '_blank', 'noopener') : null;
+  return folder ? () => openInAccount(folder) : null;
+}
+
+/**
+ * `url` in the signed-in account: with several Google accounts signed in, Google opens its links in
+ * the browser's default one unless `authuser` names another.
+ */
+function inAccount(url) {
+  const { email } = session.get();
+  if (state.source !== 'drive' || !email) return url;
+  try {
+    const link = new URL(url);
+    if (!/(^|\.)google\.com$/.test(link.hostname)) return url;
+    link.searchParams.set('authuser', email);
+    return link.href;
+  } catch {
+    return url;
+  }
+}
+
+function openInAccount(url) {
+  window.open(inAccount(url), '_blank', 'noopener');
 }
 
 /** Where Drive shows a file of the current folder: the folder itself, or the trash. */
