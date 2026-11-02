@@ -1,6 +1,6 @@
 // The Drive as a tree of nodes, after quicker-look's Node.swift.
 //
-// Node: { id, name, isDirectory, mimeType, link, iconLink, trashed, virtual,
+// Node: { id, name, isDirectory, mimeType, link, trashed, virtual,
 //         usage: { bytes, files, folders }, children (largest first) }
 // A folder's usage is the sum of its subtree, itself included in `folders`.
 
@@ -55,7 +55,6 @@ function makeNode(file) {
     isDirectory,
     mimeType: file.mimeType ?? '',
     link: file.webViewLink ?? null,
-    iconLink: file.iconLink ?? null,
     trashed: !!file.trashed,
     virtual: false,
     usage: isDirectory ? { bytes: 0, files: 0, folders: 1 } : { bytes: fileBytes(file), files: 1, folders: 0 },

@@ -3,6 +3,7 @@
 import { demoDrive, demoQuota } from './demo.js';
 import { fetchAbout, fetchAllFiles, fetchRoot, requestAccessToken, revokeToken } from './drive.js';
 import { formatBytes, formatCount } from './format.js';
+import { iconName, iconUrl } from './icons.js';
 import { FOLDER_COLOR, KIND_COLORS, KIND_LABELS, SMALL_FILES_COLOR, cushion } from './kinds.js';
 import { FOLDER_BORDER, layoutTreemap, pathNames, tileIndexAt } from './treemap.js';
 import { buildTree, findPath, removingTrashed, scanOf } from './tree.js';
@@ -11,6 +12,7 @@ const $ = (id) => document.getElementById(id);
 
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
+const ICON_OPACITY = 0.55;
 /** While listing, the tree is rebuilt at most this often (ms): cheap pages, costly rebuilds. */
 const REBUILD_INTERVAL = 500;
 
@@ -324,27 +326,19 @@ function layout() {
   if (tiles.length && state.hovered >= tiles.length) state.hovered = null;
   // Drawn tiles big enough for an icon (folders too, as in shallow mode).
   icons = [];
-  for (const tile of tiles) {
+  tiles.forEach((tile, index) => {
     const side = Math.min(MAX_ICON_SIDE, Math.min(tile.w, tile.h) - 8);
-    const src = tile.node?.iconLink;
-    if (!tile.isLeaf || tile.smallFiles > 0 || side < 16 || !src) continue;
-    icons.push({ x: tile.x + 4, y: tile.y + 4, side, src: iconSource(src, side) });
-  }
+    if (!tile.isLeaf || !tile.node || tile.bytes <= 0 || side < 16) return;
+    icons.push({ index, x: tile.x + 4, y: tile.y + 4, side, src: iconUrl(iconName(tile.node)) });
+  });
   const empty = !state.loading && scan.root.children.every((c) => c.usage.bytes === 0);
   $('treemap').classList.toggle('empty', empty);
-}
-
-/** Drive's icon links name their size (`…/16/type/…`): ask for one sharp at this device's scale. */
-function iconSource(link, side) {
-  const px = side * (window.devicePixelRatio || 1) > 32 ? 64 : 32;
-  return link.replace(/\/16\//, `/${px}/`);
 }
 
 function image(src) {
   let img = images.get(src);
   if (!img) {
     img = new Image();
-    img.referrerPolicy = 'no-referrer';
     img.onload = () => draw();
     img.src = src;
     images.set(src, img);
@@ -373,10 +367,13 @@ function draw() {
       strokeInside(tile, FOLDER_COLOR);
     }
   });
+  // Black glyphs, half transparent: they read on every tile colour and take its hue.
+  context.globalAlpha = ICON_OPACITY;
   for (const icon of icons) {
     const img = image(icon.src);
     if (img) context.drawImage(img, icon.x, icon.y, icon.side, icon.side);
   }
+  context.globalAlpha = 1;
   // Hovering a bar category outlines all its files as if each were hovered.
   const outlined = state.hoveredKind
     ? tiles.filter((t) => t.isLeaf && !t.isDirectory && t.smallFiles === 0 && t.bytes > 0 && t.kind === state.hoveredKind)

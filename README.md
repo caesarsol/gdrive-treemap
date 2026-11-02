@@ -85,6 +85,7 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 | `src/tree.js` | Flat file list → tree (sizes from `quotaBytesUsed`), trash filtering, the virtual *Elsewhere* folder. |
 | `src/treemap.js` | Squarified layout (Bruls, Huizing, van Wijk), small-files merging, hit testing: a port of `Treemap.swift`. |
 | `src/kinds.js` | Categories from MIME type then extension, colours, cushion gradients. |
+| `src/icons.js` | The icon of each file type, from extension, MIME type, then category. |
 | `src/app.js` | The view: header, category bar, canvas drawing, hover, zoom, status line. |
 | `src/demo.js` | A deterministic fake drive. |
 
@@ -95,7 +96,8 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 - "Show hidden files" became "Show trashed files": Drive has no hidden files, but its trash takes space.
 - A click inside a folder enters it instead of revealing it, since Drives are much larger than the
   folders Quick Look previews; files of the current folder open in Drive.
-- Icons come from Drive's `iconLink`; there are no content thumbnails (they would need extra requests).
+- Icons are [Phosphor Icons](https://phosphoricons.com/) (MIT), one per file type, vendored in
+  `assets/icons/` by `scripts/icons.mjs`; there are no content thumbnails (they would need extra requests).
 
 ### Limits
 

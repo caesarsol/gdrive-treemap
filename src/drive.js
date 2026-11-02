@@ -7,7 +7,7 @@ const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const API = 'https://www.googleapis.com/drive/v3';
 /** Names, sizes and folders only: the app never sees file contents. */
 export const SCOPE = 'https://www.googleapis.com/auth/drive.metadata.readonly';
-const FILE_FIELDS = 'id,name,mimeType,size,quotaBytesUsed,parents,trashed,iconLink,webViewLink';
+const FILE_FIELDS = 'id,name,mimeType,size,quotaBytesUsed,parents,trashed,webViewLink';
 
 let gisLoading = null;
 
