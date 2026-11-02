@@ -1,13 +1,17 @@
 // The Drive as a tree of nodes, after quicker-look's Node.swift.
 //
-// Node: { id, name, isDirectory, mimeType, link, trashed, virtual,
+// Node: { id, name, isDirectory, mimeType, link, trashed, virtual, description,
 //         usage: { bytes, files, folders }, children (largest first) }
-// A folder's usage is the sum of its subtree, itself included in `folders`.
+// A folder's usage is the sum of its subtree, itself included in `folders` (unless virtual: the
+// folders the view adds, such as Elsewhere, count as none).
 
 import { FOLDER_MIME, addBytesByKind } from './kinds.js';
 import { addUsage } from './treemap.js';
 
 export const ELSEWHERE_NAME = 'Elsewhere';
+export const NO_FOLDER_NAME = 'No folder';
+/** Drive's own search for files you own that sit in no folder you can open. */
+export const UNORGANIZED_SEARCH = 'https://drive.google.com/drive/search?q=is%3Aunorganized%20owner%3Ame';
 
 /** Bytes a file takes from the storage quota; Google Docs and friends often take none. */
 export function fileBytes(file) {
@@ -15,36 +19,62 @@ export function fileBytes(file) {
 }
 
 /**
- * Builds the tree under `rootId` from Drive's flat `files.list` items. Items whose parent is not
- * among them (files you own inside someone else's folder, or with no parent at all) go under a
- * virtual "Elsewhere" folder, so that the total still matches what counts against the quota.
+ * Builds the tree under `rootId` from Drive's flat `files.list` items.
+ *
+ * Items whose parent is not among them still use your quota, so they go under a virtual
+ * "Elsewhere" folder, grouped by where they really are: one virtual folder per folder someone else
+ * shared with you (named after `foreignFolders`, id → { name, link, owner }, once known), and
+ * "No folder" for files with no parent, or one you cannot open (id → null in `foreignFolders`).
  */
-export function buildTree(files, { rootId, rootName = 'My Drive', rootLink = 'https://drive.google.com/drive/my-drive' }) {
+export function buildTree(files, {
+  rootId, rootName = 'My Drive', rootLink = 'https://drive.google.com/drive/my-drive', foreignFolders = new Map(),
+}) {
   const root = makeNode({ id: rootId, name: rootName, mimeType: FOLDER_MIME, webViewLink: rootLink });
   const byId = new Map([[rootId, root]]);
   for (const file of files) {
     if (file.id !== rootId) byId.set(file.id, makeNode(file));
   }
   let elsewhere = null;
+  const groups = new Map();
+  function group(parentId) {
+    const info = parentId ? foreignFolders.get(parentId) : null;
+    const key = info === null ? NO_FOLDER_NAME : parentId;
+    if (!groups.has(key)) {
+      if (!elsewhere) {
+        elsewhere = virtualFolder('__elsewhere__', ELSEWHERE_NAME, null,
+          'Files you own outside your folders: in folders other people shared with you, or in no folder. They use your storage too.');
+        root.children.push(elsewhere);
+      }
+      const node = key === NO_FOLDER_NAME
+        ? virtualFolder('__no-folder__', NO_FOLDER_NAME, UNORGANIZED_SEARCH,
+          'Files you own that are in no folder you can open. Drive finds them with the search is:unorganized owner:me.')
+        : virtualFolder(`__shared__${parentId}`, info?.name ?? 'Shared folder', info?.link ?? null,
+          info?.owner ? `Your files in a folder ${info.owner} shared with you.` : 'Your files in a folder someone shared with you.');
+      groups.set(key, node);
+      elsewhere.children.push(node);
+    }
+    return groups.get(key);
+  }
   for (const file of files) {
     if (file.id === rootId) continue;
     const node = byId.get(file.id);
-    const parent = byId.get(file.parents?.[0]);
-    if (parent?.isDirectory) {
-      parent.children.push(node);
-    } else {
-      if (!elsewhere) {
-        elsewhere = makeNode({ id: '__elsewhere__', name: ELSEWHERE_NAME, mimeType: FOLDER_MIME });
-        elsewhere.virtual = true;
-        root.children.push(elsewhere);
-      }
-      elsewhere.children.push(node);
-    }
+    const parentId = file.parents?.[0];
+    const parent = byId.get(parentId);
+    (parent?.isDirectory ? parent : group(parentId)).children.push(node);
   }
   finalize(root);
   // The root is the drive itself: it counts what it holds, not itself.
   root.usage.folders -= 1;
   return root;
+}
+
+/** A folder of the view only, not of Drive: it counts as no folder. */
+function virtualFolder(id, name, link, description) {
+  const node = makeNode({ id, name, mimeType: FOLDER_MIME, webViewLink: link });
+  node.virtual = true;
+  node.description = description;
+  node.usage.folders = 0;
+  return node;
 }
 
 function makeNode(file) {

@@ -71,6 +71,18 @@ export function fetchAbout(token) {
   return get(token, 'about', { fields: 'user(displayName,emailAddress),storageQuota' });
 }
 
+/** Name, link and owner of a folder you can see but do not own; null if you cannot open it. */
+export async function fetchFolderInfo(token, id) {
+  try {
+    const folder = await get(token, `files/${encodeURIComponent(id)}`, { fields: 'id,name,webViewLink,owners(displayName,emailAddress)' });
+    const owner = folder.owners?.[0];
+    return { name: folder.name, link: folder.webViewLink ?? null, owner: owner?.displayName || owner?.emailAddress || null };
+  } catch (error) {
+    if (error.status === 401) throw error;
+    return null;
+  }
+}
+
 export function fetchRoot(token) {
   return get(token, 'files/root', { fields: 'id,name,webViewLink' });
 }

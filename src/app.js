@@ -1,7 +1,7 @@
 // The page: sign-in, loading, and the treemap view after quicker-look's TreemapPreviewView.swift.
 
-import { demoDrive, demoQuota } from './demo.js';
-import { fetchAbout, fetchAllFiles, fetchRoot, requestAccessToken, revokeToken } from './drive.js';
+import { demoDrive, demoForeignFolders, demoQuota } from './demo.js';
+import { fetchAbout, fetchAllFiles, fetchFolderInfo, fetchRoot, requestAccessToken, revokeToken } from './drive.js';
 import { formatBytes, formatCount } from './format.js';
 import { iconName, iconUrl } from './icons.js';
 import { FOLDER_COLOR, KIND_COLORS, KIND_LABELS, SMALL_FILES_COLOR, cushion } from './kinds.js';
@@ -52,6 +52,8 @@ const state = {
   revision: 0,
   loading: false,
   quota: null,
+  /** Folders you do not own that hold files you own: id → { name, link, owner }, or null. */
+  foreignFolders: new Map(),
   // Remembered across visits.
   includeTrashed: storage.get('includeTrashed', true),
   shallow: storage.get('shallow', false),
@@ -118,7 +120,10 @@ function showPanel(visible) {
 function startDemo() {
   state.abort?.abort();
   const { rootId, files } = demoDrive();
-  Object.assign(state, { source: 'demo', rootId, rootLink: null, files, loading: false, quota: demoQuota(files), zoom: [] });
+  Object.assign(state, {
+    source: 'demo', rootId, rootLink: null, files, loading: false, quota: demoQuota(files), zoom: [],
+    foreignFolders: demoForeignFolders(),
+  });
   $('account-name').textContent = '';
   rebuild();
   showPanel(true);
@@ -129,6 +134,7 @@ async function startDrive() {
   const abort = new AbortController();
   Object.assign(state, {
     source: 'drive', abort, files: [], loading: true, quota: null, zoom: [], withTrashed: null, withoutTrashed: null,
+    foreignFolders: new Map(),
   });
   $('account-name').textContent = '';
   showPanel(true);
@@ -152,6 +158,8 @@ async function startDrive() {
       }
     }, { signal: abort.signal });
     if (abort.signal.aborted) return;
+    await resolveForeignFolders(abort.signal);
+    if (abort.signal.aborted) return;
     state.loading = false;
     rebuild();
   } catch (error) {
@@ -168,8 +176,24 @@ async function startDrive() {
   }
 }
 
+/** Names the folders other people own that hold your files, a few requests at a time. */
+async function resolveForeignFolders(signal) {
+  const listed = new Set(state.files.map((f) => f.id));
+  const missing = [...new Set(state.files.map((f) => f.parents?.[0]).filter((id) => id && id !== state.rootId && !listed.has(id)))];
+  const queue = missing.filter((id) => !state.foreignFolders.has(id));
+  async function worker() {
+    while (queue.length && !signal.aborted) {
+      const id = queue.shift();
+      state.foreignFolders.set(id, await fetchFolderInfo(state.token, id));
+    }
+  }
+  await Promise.all(Array.from({ length: 6 }, worker));
+}
+
 function rebuild() {
-  state.withTrashed = buildTree(state.files, { rootId: state.rootId, rootLink: state.rootLink ?? null });
+  state.withTrashed = buildTree(state.files, {
+    rootId: state.rootId, rootLink: state.rootLink ?? null, foreignFolders: state.foreignFolders,
+  });
   state.withoutTrashed = removingTrashed(state.withTrashed);
   state.revision++;
   render();
@@ -248,10 +272,13 @@ function renderHeader() {
     crumbs.append(el('a', { className: 'open', href: current.link, target: '_blank', rel: 'noopener', textContent: 'Open in Drive ↗' }));
   }
 
-  // A folder's usage counts the folder itself; the root's already leaves itself out.
-  const folders = path.length > 1 ? total.folders - 1 : total.folders;
+  // A folder's usage counts the folder itself; the root's already leaves itself out, and virtual
+  // folders count as none.
+  const folders = path.length > 1 && !current.virtual ? total.folders - 1 : total.folders;
   $('counts').textContent =
     `${formatCount(current.children.length)} items · ${formatCount(total.files)} files · ${formatCount(folders)} folders`;
+  $('description').textContent = current.description ?? '';
+  $('description').hidden = !current.description;
   $('total-bytes').textContent = formatBytes(total.bytes);
   $('spinner').hidden = !state.loading;
   $('caption').textContent = state.loading

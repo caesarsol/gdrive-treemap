@@ -88,11 +88,20 @@ export function demoDrive(seed = 7) {
 
   // Owned by you, inside a folder someone else shared with you: its parent is not listed.
   addFiles(['pdf', 6], 'someone-elses-folder', 'Shared deck');
+  // Owned by you, in no folder at all (its folder was deleted by its owner, say).
+  const beforeOrphans = files.length;
+  addFiles(['zip', 2], 'gone-folder', 'Orphan');
+  for (const f of files.slice(beforeOrphans)) f.parents = [];
 
   // Google Docs take no quota: listed, but with nothing to draw.
   files.push({ id: id(), name: 'Meeting notes', mimeType: 'application/vnd.google-apps.document', quotaBytesUsed: '0', parents: [DEMO_ROOT_ID], trashed: false });
 
   return { rootId: DEMO_ROOT_ID, files };
+}
+
+/** What Drive would say of the folders that hold your files but aren't yours. */
+export function demoForeignFolders() {
+  return new Map([['someone-elses-folder', { name: 'Client deliverables', link: 'https://drive.google.com/demo/someone-elses-folder', owner: 'Ada Lovelace' }]]);
 }
 
 /** Totals for the demo, shaped like `about.storageQuota`. */

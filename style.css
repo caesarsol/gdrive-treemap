@@ -90,6 +90,7 @@ a { color: var(--accent); }
 .crumbs .current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .crumbs .open { font-size: 12px; font-weight: 400; margin-left: 6px; text-decoration: none; }
 .crumbs .open:hover { text-decoration: underline; }
+.description { font-size: 12px; max-width: 60ch; }
 .toggles { display: flex; gap: 16px; font-size: 12px; }
 .toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .toggles input { margin: 0; }

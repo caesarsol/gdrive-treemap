@@ -52,6 +52,8 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
     switch (url.pathname) {
       case '/drive/v3/about':
         return json({ user: { displayName: 'Test User', emailAddress: 'test@example.com' }, storageQuota: { limit: '15000000000', usage: '4950000000' } });
+      case '/drive/v3/files/someone-elses-folder':
+        return json({ id: 'someone-elses-folder', name: 'Team stuff', webViewLink: link('someone-elses-folder'), owners: [{ displayName: 'Ada' }] });
       case '/drive/v3/files/root':
         return json({ id: 'root-id', name: 'My Drive', webViewLink: 'https://drive.google.com/drive/my-drive' });
       case '/drive/v3/files': {
@@ -80,7 +82,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await expect(page.locator('#panel')).toBeVisible();
   await expect(page.locator('#caption')).toHaveText('owned by you, trash included');
   expect(pageTokens).toEqual(['folders null', 'files null', 'files page-2']);
-  expect(authorizations.length).toBe(5);
+  expect(authorizations.length).toBe(6);
   expect(new Set(authorizations)).toEqual(new Set(['Bearer test-token']));
 
   // Header: account, quota, totals and counts of the mocked drive.
@@ -89,8 +91,9 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await expect(page.locator('#demo-badge')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
   await expect(page.locator('#total-bytes')).toHaveText('4.95 GB');
-  // Projects, report.pdf, old.zip, Elsewhere and Notes; the folders are Projects, Sub and Elsewhere.
-  await expect(page.locator('#counts')).toHaveText('5 items · 6 files · 3 folders');
+  // Projects, report.pdf, old.zip, Elsewhere and Notes; the folders are Projects and Sub (Elsewhere
+  // is the app's, not Drive's).
+  await expect(page.locator('#counts')).toHaveText('5 items · 6 files · 2 folders');
   await expect(page.locator('#crumbs .open')).toHaveAttribute('href', 'https://drive.google.com/drive/my-drive');
   await expect(page.locator('#kind-legend [data-kind]')).toHaveText([
     'Videos 3 GB', 'Documents 1.2 GB', 'Images 500 MB', 'Archives 250 MB',
@@ -101,7 +104,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
     ['video.mp4', 'Projects/', '3 GB'],
     ['photo.jpg', 'Projects/Sub/', '500 MB'],
     ['old.zip', '', '250 MB · in trash'],
-    ['shared.pdf', 'Elsewhere/', '200 MB'],
+    ['shared.pdf', 'Elsewhere/Team stuff/', '200 MB'],
   ]) {
     expect(await findTile(page, { name, folders }), name).not.toBeNull();
     await expect(page.locator('#status-detail')).toHaveText(detail);
@@ -118,6 +121,19 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['My Drive', 'Projects']);
   await page.keyboard.press('Escape');
   await expect(page.locator('#crumbs .current')).toHaveText('My Drive');
+
+  // Elsewhere opens like a folder and says what it holds; its groups link to the real folders.
+  const shared = await findTile(page, { name: 'shared.pdf', folders: 'Elsewhere/Team stuff/' });
+  await page.mouse.click(shared.x, shared.y);
+  await expect(page.locator('#crumbs .current')).toHaveText('Elsewhere');
+  await expect(page.locator('#description')).toContainText('shared with you');
+  await expect(page.locator('#crumbs .open')).toHaveCount(0);
+  await page.mouse.click(shared.x, shared.y);
+  await expect(page.locator('#crumbs .current')).toHaveText('Team stuff');
+  await expect(page.locator('#description')).toContainText('a folder Ada shared with you');
+  await expect(page.locator('#crumbs .open')).toHaveAttribute('href', link('someone-elses-folder'));
+  await page.locator('#crumbs').getByRole('button', { name: 'My Drive' }).click();
+  await expect(page.locator('#description')).toBeHidden();
 
   // Clicking a file right in the current folder opens it in Drive.
   const report = await findTile(page, { name: 'report.pdf', folders: '' });

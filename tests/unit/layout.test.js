@@ -4,7 +4,7 @@ import { formatBytes } from '../../src/format.js';
 import { fileKind } from '../../src/kinds.js';
 import { FOLDER_MIME } from '../../src/kinds.js';
 import { layoutTreemap, squarify, tileIndexAt } from '../../src/treemap.js';
-import { ELSEWHERE_NAME, buildTree, removingTrashed } from '../../src/tree.js';
+import { ELSEWHERE_NAME, NO_FOLDER_NAME, UNORGANIZED_SEARCH, buildTree, removingTrashed } from '../../src/tree.js';
 
 const file = (id, parent, bytes, extra = {}) => ({ id, name: `${id}.bin`, mimeType: 'application/octet-stream', quotaBytesUsed: String(bytes), parents: [parent], ...extra });
 const folder = (id, parent, extra = {}) => ({ id, name: id, mimeType: FOLDER_MIME, parents: [parent], ...extra });
@@ -28,9 +28,29 @@ test('buildTree nests, sums, sorts, and gathers orphans under Elsewhere', () => 
   ], { rootId: 'R' });
   assert.equal(root.usage.bytes, 520);
   assert.equal(root.usage.files, 5);
-  assert.equal(root.usage.folders, 2); // "a" and Elsewhere; the drive itself is not counted
+  assert.equal(root.usage.folders, 1); // "a": neither the drive itself nor the virtual Elsewhere count
   assert.deepEqual(root.children.map((c) => c.name), ['a', ELSEWHERE_NAME, 'b.bin', 'Doc']);
   assert.deepEqual(root.children[0].children.map((c) => c.usage.bytes), [300, 100]);
+});
+
+test('Elsewhere groups orphans by the folder they are really in', () => {
+  const root = buildTree([
+    file('s1', 'theirs', 10), file('s2', 'theirs', 20),
+    file('g1', 'gone', 5), { ...file('n1', 'x', 7), parents: undefined },
+    file('p1', 'pending', 1),
+  ], {
+    rootId: 'R',
+    foreignFolders: new Map([['theirs', { name: 'Team', link: 'https://drive/theirs', owner: 'Ada' }], ['gone', null]]),
+  });
+  const elsewhere = root.children.find((c) => c.name === ELSEWHERE_NAME);
+  assert.ok(elsewhere.virtual && elsewhere.description);
+  assert.deepEqual(elsewhere.children.map((c) => [c.name, c.usage.files, c.link]), [
+    ['Team', 2, 'https://drive/theirs'],
+    [NO_FOLDER_NAME, 2, UNORGANIZED_SEARCH],
+    ['Shared folder', 1, null], // not resolved yet
+  ]);
+  assert.match(elsewhere.children[0].description, /Ada/);
+  assert.equal(root.usage.folders, 0);
 });
 
 test('removingTrashed drops trash and recomputes totals, sharing untouched subtrees', () => {

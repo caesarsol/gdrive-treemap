@@ -25,8 +25,10 @@ web allows them.
   enter is outlined while hovering); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
   sits right in the current folder to open it in Drive (quicker-look's "Show in Finder").
 - **Progressive loading**: the treemap fills in while Drive is listed, 1,000 items per request.
-- **Elsewhere**: files you own that sit in someone else's folder (or in no folder) still use your quota;
-  they are gathered under a virtual folder so the total adds up.
+- **Elsewhere**: files you own that sit outside your folders still use your quota. They are gathered
+  under a virtual folder, grouped by where they really are: one group per folder someone else shared
+  with you (named after it, opening it in Drive), and **No folder** for files with no folder you can
+  open (Drive's own search for them, `is:unorganized owner:me`).
 - **Demo data** (`?demo`) to try it without signing in.
 
 ## Google Cloud setup
