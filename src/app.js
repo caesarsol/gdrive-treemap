@@ -7,13 +7,12 @@ import { formatBytes, formatCount } from './format.js';
 import { iconName, iconUrl } from './icons.js';
 import { FOLDER_COLOR, KIND_COLORS, KIND_LABELS, SMALL_FILES_COLOR, cushion } from './kinds.js';
 import { FOLDER_BORDER, layoutTreemap, pathNames, tileIndexAt } from './treemap.js';
-import { buildTree, findPath, removingTrashed, scanOf } from './tree.js';
+import { DRIVE_TRASH, buildTree, findPath, removingTrashed, scanOf } from './tree.js';
 
 const $ = (id) => document.getElementById(id);
 
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
-const DRIVE_TRASH = 'https://drive.google.com/drive/trash';
 const ICON_OPACITY = 0.9;
 const LABEL_FONT_SIZE = 12;
 const LABEL_OPACITY = 0.95;
@@ -454,7 +453,9 @@ function layout() {
   tiles.forEach((tile, index) => {
     const side = Math.min(MAX_ICON_SIDE, Math.min(tile.w, tile.h) - 8);
     if (!tile.isLeaf || !tile.node || tile.bytes <= 0 || side < 16) return;
-    icons.push({ index, x: tile.x + 4, y: tile.y + 4, side, src: iconUrl(iconName(tile.node)) });
+    // Trashed files keep their type's icon, with a small trash can on it.
+    const badge = tile.node.trashed && !tile.node.virtual ? iconUrl('trash') : null;
+    icons.push({ index, x: tile.x + 4, y: tile.y + 4, side, src: iconUrl(iconName(tile.node)), badge });
   });
   const empty = !state.loading && scan.root.children.every((c) => c.usage.bytes === 0);
   $('treemap').classList.toggle('empty', empty);
@@ -507,6 +508,8 @@ function draw() {
   for (const icon of icons) {
     const img = image(icon.src);
     if (img) context.drawImage(img, icon.x, icon.y, icon.side, icon.side);
+    const badge = icon.badge && image(icon.badge);
+    if (badge) drawBadge(badge, icon);
   }
   context.globalAlpha = 1;
   if (!state.hoveredKind && state.hovered != null) drawLabel(state.hovered);
@@ -524,6 +527,22 @@ function draw() {
   for (const tile of outlined) strokeInside(tile, 'white');
 }
 
+/** A small glyph on a dark disc, centred on the icon's bottom-right corner. */
+function drawBadge(img, icon) {
+  const radius = icon.side * 0.3;
+  const cx = icon.x + icon.side - radius * 0.4;
+  const cy = icon.y + icon.side - radius * 0.4;
+  context.save();
+  context.globalAlpha = 1;
+  context.fillStyle = 'rgba(0, 0, 0, 0.55)';
+  context.beginPath();
+  context.arc(cx, cy, radius, 0, 2 * Math.PI);
+  context.fill();
+  context.restore();
+  const side = radius * 1.4;
+  context.drawImage(img, cx - side / 2, cy - side / 2, side, side);
+}
+
 function setGlyphShadow() {
   context.shadowColor = GLYPH_SHADOW.color;
   context.shadowBlur = GLYPH_SHADOW.blur;
@@ -535,7 +554,8 @@ function drawLabel(index) {
   const icon = icons.find((i) => i.index === index);
   if (!icon) return;
   const tile = tiles[index];
-  const top = icon.y + icon.side + 3;
+  // Below the badge too, which sticks out of the icon's corner.
+  const top = icon.y + icon.side + 3 + (icon.badge ? icon.side * 0.18 : 0);
   const maxWidth = tile.w - 8;
   if (top + LABEL_FONT_SIZE > tile.y + tile.h - 2 || maxWidth < 24) return;
   context.font = `600 ${LABEL_FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;

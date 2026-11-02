@@ -105,7 +105,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.mouse.click(myDrive.x, myDrive.y);
   await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['Google account', 'My Drive']);
   await expect(page.locator('#total-bytes')).toHaveText('4.95 GB');
-  // Projects, report.pdf, old.zip, Elsewhere and Notes; the folders are Projects and Sub (Elsewhere
+  // Projects, report.pdf, .Trash (old.zip), Elsewhere and Notes; the folders are Projects and Sub (.Trash and Elsewhere
   // is the app's, not Drive's).
   await expect(page.locator('#counts')).toHaveText('5 items · 6 files · 2 folders');
   await expect(page.locator('#crumbs .open')).toHaveAttribute('href', 'https://drive.google.com/drive/my-drive');
@@ -117,7 +117,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   for (const [name, folders, detail] of [
     ['video.mp4', 'Projects/', '3 GB'],
     ['photo.jpg', 'Projects/Sub/', '500 MB'],
-    ['old.zip', '', '250 MB · in trash'],
+    ['old.zip', '.Trash/', '250 MB · in trash'],
     ['shared.pdf', 'Elsewhere/Team stuff/', '200 MB'],
   ]) {
     expect(await findTile(page, { name, folders }), name).not.toBeNull();

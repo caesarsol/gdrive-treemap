@@ -4,7 +4,7 @@ import { formatBytes } from '../../src/format.js';
 import { fileKind } from '../../src/kinds.js';
 import { FOLDER_MIME } from '../../src/kinds.js';
 import { layoutTreemap, squarify, tileIndexAt } from '../../src/treemap.js';
-import { ELSEWHERE_NAME, NO_FOLDER_NAME, UNORGANIZED_SEARCH, buildTree, removingTrashed } from '../../src/tree.js';
+import { DRIVE_TRASH, ELSEWHERE_NAME, NO_FOLDER_NAME, TRASH_NAME, UNORGANIZED_SEARCH, buildTree, removingTrashed } from '../../src/tree.js';
 
 const file = (id, parent, bytes, extra = {}) => ({ id, name: `${id}.bin`, mimeType: 'application/octet-stream', quotaBytesUsed: String(bytes), parents: [parent], ...extra });
 const folder = (id, parent, extra = {}) => ({ id, name: id, mimeType: FOLDER_MIME, parents: [parent], ...extra });
@@ -65,6 +65,21 @@ test('removingTrashed drops trash and recomputes totals, sharing untouched subtr
   assert.equal(visible.usage.folders, 2);
   assert.deepEqual(visible.children.map((c) => c.name), ['mixed', 'keep']);
   assert.equal(visible.children[1], root.children.find((c) => c.name === 'keep'));
+});
+
+test('trashed items go to .Trash as Drive shows them, their contents still inside', () => {
+  const root = buildTree([
+    folder('keep', 'R'), file('k1', 'keep', 10), file('k2', 'keep', 20, { trashed: true }),
+    folder('gone', 'R', { trashed: true }), file('g1', 'gone', 100, { trashed: true }),
+    file('lost', 'not-listed', 5, { trashed: true }),
+  ], { rootId: 'R' });
+  const trash = root.children.find((c) => c.name === TRASH_NAME);
+  assert.equal(trash.link, DRIVE_TRASH);
+  assert.equal(trash.icon, 'trash');
+  assert.deepEqual(trash.children.map((c) => c.name), ['gone', 'k2.bin', 'lost.bin']);
+  assert.deepEqual(trash.children[0].children.map((c) => c.name), ['g1.bin']);
+  assert.ok(!root.children.some((c) => c.name === ELSEWHERE_NAME));
+  assert.equal(removingTrashed(root).children.find((c) => c.name === TRASH_NAME), undefined);
 });
 
 test('layout merges items too small to draw into one small-files tile', () => {

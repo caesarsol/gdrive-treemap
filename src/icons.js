@@ -67,7 +67,7 @@ const BY_KIND = {
 
 /** Every icon name the app may draw: scripts/icons.mjs vendors exactly these. */
 export const ICON_NAMES = [...new Set([
-  'folder', 'folder-user', 'folder-dashed', 'envelope-simple', 'circle-dashed', ...Object.values(BY_EXTENSION), ...Object.values(BY_MIME), ...Object.values(BY_KIND),
+  'folder', 'folder-user', 'folder-dashed', 'envelope-simple', 'circle-dashed', 'trash', ...Object.values(BY_EXTENSION), ...Object.values(BY_MIME), ...Object.values(BY_KIND),
 ])].sort();
 
 /** The icon for a tree node: its type's, or a folder: someone else's for Elsewhere and its shared

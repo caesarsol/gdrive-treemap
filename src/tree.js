@@ -10,6 +10,8 @@ import { addUsage } from './treemap.js';
 
 export const ELSEWHERE_NAME = 'Elsewhere';
 export const NO_FOLDER_NAME = 'No folder';
+export const TRASH_NAME = '.Trash';
+export const DRIVE_TRASH = 'https://drive.google.com/drive/trash';
 /** Drive's own search for files you own that sit in no folder you can open. */
 export const UNORGANIZED_SEARCH = 'https://drive.google.com/drive/search?q=is%3Aunorganized%20owner%3Ame';
 
@@ -55,12 +57,27 @@ export function buildTree(files, {
     }
     return groups.get(key);
   }
+  // Trashed items go to a virtual .Trash, as Drive's trash shows them: what was trashed itself, with
+  // its contents, which Drive trashes along with it, still inside.
+  let trash = null;
+  function trashFolder() {
+    if (!trash) {
+      trash = virtualFolder('__trash__', TRASH_NAME, DRIVE_TRASH,
+        'Files and folders in your Drive trash. They use your storage until the trash is emptied, which Drive does after 30 days.');
+      trash.icon = 'trash';
+      root.children.push(trash);
+    }
+    return trash;
+  }
   for (const file of files) {
     if (file.id === rootId) continue;
     const node = byId.get(file.id);
     const parentId = file.parents?.[0];
     const parent = byId.get(parentId);
-    (parent?.isDirectory ? parent : group(parentId)).children.push(node);
+    const destination = node.trashed && !(parent?.isDirectory && parent.trashed)
+      ? trashFolder()
+      : parent?.isDirectory ? parent : group(parentId);
+    destination.children.push(node);
   }
   finalize(root);
   // The root is the drive itself: it counts what it holds, not itself.
