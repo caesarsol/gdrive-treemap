@@ -29,16 +29,21 @@ function loadGis() {
   return gisLoading;
 }
 
-/** Opens Google's consent popup and resolves with an access token. */
-export async function requestAccessToken(clientId) {
+/**
+ * Opens Google's sign-in popup and resolves with `{ token, expiresAt }` (ms since the epoch).
+ * With the `hint` of an account that already said yes, the popup asks nothing: no account to pick,
+ * no consent, it closes by itself.
+ */
+export async function requestAccessToken(clientId, { hint } = {}) {
   await loadGis();
   return new Promise((resolve, reject) => {
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: SCOPE,
+      ...(hint ? { login_hint: hint, prompt: '' } : {}),
       callback: (response) => {
         if (response.error) reject(new Error(response.error_description || response.error));
-        else resolve(response.access_token);
+        else resolve({ token: response.access_token, expiresAt: Date.now() + Number(response.expires_in || 3600) * 1000 });
       },
       error_callback: (error) => reject(new Error(error.message || error.type || 'Sign-in failed.')),
     });

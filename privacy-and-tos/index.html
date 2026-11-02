@@ -56,14 +56,17 @@
 
     <h2>Where the data goes and how long it is kept</h2>
     <ul>
-      <li><strong>In memory only.</strong> File metadata and the access token Google issues live in the browser tab’s
-        memory. They are gone when you sign out, reload or close the tab. The access token expires after about one
-        hour and is revoked when you choose <strong>Sign out</strong>.</li>
+      <li><strong>File metadata in memory only.</strong> The metadata of your files lives in the browser tab’s memory
+        and is gone when you sign out, reload or close the tab.</li>
+      <li><strong>Sign-in kept in your browser.</strong> So that reloading the page does not ask you to sign in again,
+        the access token Google issues is kept in your browser’s <code>localStorage</code> until it expires (after
+        about one hour), together with your email address, which lets the next sign-in skip choosing the account.
+        Both are deleted, and the token revoked, when you choose <strong>Sign out</strong>.</li>
       <li><strong>Not on any server.</strong> Requests go directly from your browser to Google’s APIs. We operate no
         server that receives, stores or logs your Google data, and nothing is transferred to us or to third parties.</li>
-      <li><strong>Browser storage.</strong> The App stores in your browser’s <code>localStorage</code> only your view
-        preferences (“Show trashed files”, “Shallow”) and, if you typed one, an OAuth client ID. None of it is
-        personal data; you can delete it by clearing this site’s data in your browser.</li>
+      <li><strong>Browser storage.</strong> The App stores in your browser’s <code>localStorage</code> besides the sign-in
+        above, only your view preferences (“Show trashed files”, “Shallow”) and, if you typed one, an OAuth client
+        ID. You can delete all of it by clearing this site’s data in your browser.</li>
     </ul>
 
     <h2>Third parties</h2>

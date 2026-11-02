@@ -31,7 +31,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.route('https://accounts.google.com/gsi/client', (route) => route.fulfill({
     contentType: 'text/javascript',
     body: `window.google = { accounts: { oauth2: {
-      initTokenClient: ({ callback }) => ({ requestAccessToken() { callback({ access_token: 'test-token' }); } }),
+      initTokenClient: ({ callback }) => ({ requestAccessToken() { callback({ access_token: 'test-token', expires_in: 3599 }); } }),
       revoke(token, done) { done?.(); },
     } } };`,
   }));
@@ -142,7 +142,18 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.mouse.click(report.x, report.y);
   await expect(await popup).toHaveURL(link('report'));
 
-  // Signing out goes back to the start page.
+  // Reloading within the hour keeps the sign-in: straight back to the drive, with the same token.
+  const before = authorizations.length;
+  await page.reload();
+  await expect(page.locator('#panel')).toBeVisible();
+  await expect(page.locator('#total-bytes')).toHaveText('4.7 GB'); // the trash is still left out
+  expect(authorizations.length).toBeGreaterThan(before);
+  expect(new Set(authorizations)).toEqual(new Set(['Bearer test-token']));
+
+  // Signing out goes back to the start page, and forgets the sign-in.
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.locator('#welcome')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#welcome')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
 });

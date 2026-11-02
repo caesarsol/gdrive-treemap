@@ -77,6 +77,28 @@ function showError(message) {
   $('error').hidden = !message;
 }
 
+// Google hands a page without a server only short-lived tokens (an hour), never refresh tokens.
+// So the token is kept until it expires, and reloading within the hour needs no sign-in; after
+// that, the account is remembered, and signing in again is one click on a popup that asks nothing.
+const SESSION_KEY = 'session';
+const EXPIRY_MARGIN = 60_000;
+
+/** The kept session: `{ token, expiresAt, email }`, any of them possibly missing. */
+const session = {
+  get: () => storage.get(SESSION_KEY, null) ?? {},
+  set: (fields) => storage.set(SESSION_KEY, { ...session.get(), ...fields }),
+  clear: () => storage.set(SESSION_KEY, null),
+  validToken() {
+    const { token, expiresAt } = session.get();
+    return token && expiresAt - EXPIRY_MARGIN > Date.now() ? token : null;
+  },
+};
+
+function showSignIn() {
+  const { email } = session.get();
+  $('sign-in').textContent = email ? `Continue as ${email}` : 'Sign in with Google';
+}
+
 $('sign-in-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const clientId = configuredClientId || $('client-id').value.trim();
@@ -88,7 +110,9 @@ $('sign-in-form').addEventListener('submit', async (event) => {
   if (!configuredClientId) storage.set('clientId', clientId);
   showError('');
   try {
-    state.token = await requestAccessToken(clientId);
+    const { token, expiresAt } = await requestAccessToken(clientId, { hint: session.get().email });
+    state.token = token;
+    session.set({ token, expiresAt });
   } catch (error) {
     showError(error.message);
     return;
@@ -101,6 +125,8 @@ $('reload').addEventListener('click', () => (state.source === 'demo' ? startDemo
 $('sign-out').addEventListener('click', () => {
   state.abort?.abort();
   if (state.token) revokeToken(state.token);
+  if (state.source === 'drive') session.clear();
+  showSignIn();
   Object.assign(state, { source: null, token: null, files: [], withTrashed: null, withoutTrashed: null, zoom: [], quota: null });
   if (new URLSearchParams(location.search).has('demo')) history.replaceState(null, '', location.pathname);
   showPanel(false);
@@ -143,6 +169,7 @@ async function startDrive() {
     if (abort.signal.aborted) return;
     state.quota = about.storageQuota;
     $('account-name').textContent = about.user?.emailAddress ?? '';
+    if (about.user?.emailAddress) session.set({ email: about.user.emailAddress });
     Object.assign(state, { rootId: root.id, rootLink: root.webViewLink });
     let lastBuild = 0;
     await fetchAllFiles(state.token, (files, done) => {
@@ -167,6 +194,9 @@ async function startDrive() {
     state.loading = false;
     if (error.status === 401) {
       state.source = null;
+      state.token = null;
+      session.set({ token: null, expiresAt: null });
+      showSignIn();
       showPanel(false);
       showError('Your Google session expired: sign in again.');
     } else {
@@ -565,5 +595,12 @@ function el(tag, props = {}) {
   return Object.assign(document.createElement(tag), props);
 }
 
-// For the tests and for sharing: `?demo` opens the demo straight away.
-if (new URLSearchParams(location.search).has('demo')) startDemo();
+// For the tests and for sharing: `?demo` opens the demo straight away. Otherwise a token still
+// valid from an earlier visit opens the drive straight away.
+showSignIn();
+if (new URLSearchParams(location.search).has('demo')) {
+  startDemo();
+} else if (session.validToken()) {
+  state.token = session.validToken();
+  startDrive();
+}

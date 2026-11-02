@@ -51,7 +51,12 @@ Signing in needs an OAuth client ID of your own (free, a few minutes):
    (remembered in the browser), and `?client_id=…` works too.
 
 The client ID is not a secret. The app asks for `drive.metadata.readonly` only: names, sizes and
-folders, never file contents. The access token lives in the page's memory and is revoked on sign out.
+folders, never file contents.
+
+Without a server, Google only hands out access tokens that last an hour, never refresh tokens. The
+token is kept in `localStorage` until it expires, so reloading needs no new sign-in; after that the
+account is remembered, and signing in again is one click on a popup that asks nothing. Sign out
+revokes the token and forgets both.
 
 ## Run locally
 
