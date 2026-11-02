@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy and Terms · Drive Treemap</title>
+  <meta name="description" content="Privacy Policy and Terms of Service of Drive Treemap.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='9' height='16' fill='%2366bfff'/%3E%3Crect x='10' width='6' height='9' fill='%2330d158'/%3E%3Crect x='10' y='10' width='6' height='6' fill='%23ffd60a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="chrome">
+    <a class="brand" href="../">Drive Treemap</a>
+    <nav class="account"><a href="#privacy">Privacy Policy</a><a href="#terms">Terms of Service</a></nav>
+  </header>
+
+  <article class="legal">
+    <p class="secondary">Last updated: 2 November 2026</p>
+
+    <h1 id="privacy">Privacy Policy</h1>
+
+    <p>Drive Treemap (“the App”), available at <a href="https://caesarsol.github.io/gdrive-treemap/">caesarsol.github.io/gdrive-treemap</a>,
+      shows how the storage space of your Google Drive is used, as a treemap. It is run by Cesare Soldini
+      (“we”, “us”), the author of the App, as a free, non-commercial project. Its source code is public at
+      <a href="https://github.com/caesarsol/gdrive-treemap">github.com/caesarsol/gdrive-treemap</a>, so everything
+      described here can be checked against it.</p>
+
+    <h2>In short</h2>
+    <ul>
+      <li>The App runs entirely in your browser. It has no server, no database and no user accounts of its own.</li>
+      <li>It reads the <em>metadata</em> of your Drive files (names, sizes, folders), never their contents.</li>
+      <li>That data goes straight from Google to your browser, is used only to draw the treemap, and is never
+        sent to us or to anyone else.</li>
+      <li>There are no analytics, no advertising, no tracking cookies.</li>
+    </ul>
+
+    <h2>Data the App accesses</h2>
+    <p>When you choose <strong>Sign in with Google</strong>, Google asks you to grant the App one permission:
+      <code>https://www.googleapis.com/auth/drive.metadata.readonly</code> (“See information about your Google Drive
+      files”). With it, and only for the files you own, the App reads:</p>
+    <ul>
+      <li>for each file and folder: its identifier, name, type (MIME type), size, the storage quota it uses,
+        the folder it is in, whether it is in the trash, its icon link and its link to open it in Drive;</li>
+      <li>your account’s email address and display name, to show which account is signed in;</li>
+      <li>your storage quota (limit and usage), to show how full your account is.</li>
+    </ul>
+    <p>The App cannot read, download, change, share or delete your files, and cannot see the files of other people.</p>
+
+    <h2>How the data is used</h2>
+    <p>The data is used only to draw the treemap, the per-category totals and the storage usage shown on the page,
+      and to let you open a file in Google Drive when you click it. It is not used for any other purpose: not for
+      advertising, not to build profiles, not to train machine-learning or AI models, and it is never sold.</p>
+
+    <h2>Where the data goes and how long it is kept</h2>
+    <ul>
+      <li><strong>In memory only.</strong> File metadata and the access token Google issues live in the browser tab’s
+        memory. They are gone when you sign out, reload or close the tab. The access token expires after about one
+        hour and is revoked when you choose <strong>Sign out</strong>.</li>
+      <li><strong>Not on any server.</strong> Requests go directly from your browser to Google’s APIs. We operate no
+        server that receives, stores or logs your Google data, and nothing is transferred to us or to third parties.</li>
+      <li><strong>Browser storage.</strong> The App stores in your browser’s <code>localStorage</code> only your view
+        preferences (“Show trashed files”, “Shallow”) and, if you typed one, an OAuth client ID. None of it is
+        personal data; you can delete it by clearing this site’s data in your browser.</li>
+    </ul>
+
+    <h2>Third parties</h2>
+    <ul>
+      <li><strong>Google</strong> provides the sign-in (Google Identity Services) and the Google Drive API. Your use of
+        them is governed by the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>. File icons are
+        loaded from Google’s servers, without sending this page’s address.</li>
+      <li><strong>GitHub Pages</strong> hosts the App’s files. Like any web host, GitHub may log technical data such as
+        IP addresses when your browser downloads them; see the
+        <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub
+        Privacy Statement</a>. We do not have access to these logs.</li>
+    </ul>
+
+    <h2>Google API Services User Data Policy</h2>
+    <p>Drive Treemap’s use and transfer of information received from Google APIs adheres to the
+      <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data
+      Policy</a>, including the Limited Use requirements.</p>
+
+    <h2>Your choices and rights</h2>
+    <ul>
+      <li>You can stop the App’s access at any time with <strong>Sign out</strong>, or by removing it from
+        <a href="https://myaccount.google.com/permissions">your Google Account’s third-party connections</a>.</li>
+      <li>Because we do not collect or keep any personal data, there is nothing we hold that could be accessed,
+        corrected, exported or deleted. If you live in the European Economic Area, the United Kingdom or another region
+        with similar laws, you nevertheless keep all your rights under the GDPR and equivalent laws, including the right
+        to lodge a complaint with your data protection authority (in Italy, the
+        <a href="https://www.garanteprivacy.it/">Garante per la protezione dei dati personali</a>).</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>The App is not directed to children under 13 (or the minimum age for a Google Account in your country).</p>
+
+    <h2>Changes</h2>
+    <p>If the App starts handling data differently, this policy will be updated before the change takes effect,
+      and the date at the top will change. The history of this page is public in the source repository.</p>
+
+    <h2>Contact</h2>
+    <p>For any question about privacy, open an issue at
+      <a href="https://github.com/caesarsol/gdrive-treemap/issues">github.com/caesarsol/gdrive-treemap/issues</a>.</p>
+
+    <hr>
+
+    <h1 id="terms">Terms of Service</h1>
+
+    <p>These terms apply to your use of Drive Treemap (“the App”). By using it you agree to them; if you do not,
+      please do not use the App.</p>
+
+    <h2>1. The service</h2>
+    <p>The App is a free tool that visualises how the storage of your Google Drive is used. It runs in your browser
+      and reads your files’ metadata through the Google Drive API, as described in the
+      <a href="#privacy">Privacy Policy</a>. It may change, be interrupted or be discontinued at any time,
+      without notice.</p>
+
+    <h2>2. Your Google account</h2>
+    <p>You need a Google Account and must use it in line with Google’s
+      <a href="https://policies.google.com/terms">Terms of Service</a> and, for Google Workspace accounts, your
+      organisation’s rules. You are responsible for the account you sign in with and for granting or revoking the
+      App’s access.</p>
+
+    <h2>3. Acceptable use</h2>
+    <p>Do not use the App to access accounts you are not authorised to use, to break the law, or to interfere with
+      the App, with Google’s services or with GitHub Pages (for example by automated abuse).</p>
+
+    <h2>4. Read-only, and figures as Google reports them</h2>
+    <p>The App only reads metadata and never changes your Drive. Sizes, totals and categories are computed from what
+      the Google Drive API reports and may differ from other figures shown by Google (for example, the account-wide
+      quota includes Gmail and Google Photos). Do not rely on the App as your only basis for deleting files.</p>
+
+    <h2>5. Open source</h2>
+    <p>The source code is published at <a href="https://github.com/caesarsol/gdrive-treemap">github.com/caesarsol/gdrive-treemap</a>.
+      “Google Drive” and “Google” are trademarks of Google LLC. The App is independent and is not endorsed by, sponsored
+      by or affiliated with Google.</p>
+
+    <h2>6. No warranty</h2>
+    <p>The App is provided “as is” and “as available”, without warranties of any kind, express or implied, including
+      fitness for a particular purpose, accuracy and uninterrupted availability, to the fullest extent permitted by law.</p>
+
+    <h2>7. Limitation of liability</h2>
+    <p>To the fullest extent permitted by law, the author is not liable for any indirect, incidental or consequential
+      damages, or for loss of data, arising from your use of the App. Nothing in these terms excludes or limits liability
+      that cannot be excluded or limited by law, such as liability for wilful misconduct or gross negligence, nor
+      affects your statutory rights as a consumer.</p>
+
+    <h2>8. Changes to these terms</h2>
+    <p>These terms may be updated; the date at the top shows the latest version. Continuing to use the App after a
+      change means you accept the new terms.</p>
+
+    <h2>9. Governing law</h2>
+    <p>These terms are governed by Italian law. If you are a consumer, you also keep the protection of the mandatory
+      laws of your country of residence and may bring proceedings in its courts.</p>
+
+    <h2>10. Contact</h2>
+    <p>Questions about these terms: <a href="https://github.com/caesarsol/gdrive-treemap/issues">github.com/caesarsol/gdrive-treemap/issues</a>.</p>
+  </article>
+</body>
+</html>

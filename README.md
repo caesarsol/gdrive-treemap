@@ -42,6 +42,8 @@ Signing in needs an OAuth client ID of your own (free, a few minutes):
 4. **Credentials → Create credentials → OAuth client ID → Web application**. Under **Authorized
    JavaScript origins** add every origin you serve the page from, e.g. `http://localhost:8080` and
    `https://<you>.github.io`. No redirect URI is needed.
+   On the consent screen's **Branding** page, the privacy policy and terms of service are at
+   `https://<you>.github.io/gdrive-treemap/privacy-and-tos/#privacy` and `…#terms`.
 5. Give the app the client ID through the `GOOGLE_CLIENT_ID` environment variable (see below). It is
    never committed: `config.js` is generated from it. Without one, the start page asks for a client ID
    (remembered in the browser), and `?client_id=…` works too.

@@ -8,7 +8,7 @@ const out = join(root, '_site');
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out);
-for (const entry of ['index.html', 'style.css', 'src']) {
+for (const entry of ['index.html', 'style.css', 'src', 'privacy-and-tos']) {
   cpSync(join(root, entry), join(out, entry), { recursive: true });
 }
 writeFileSync(join(out, 'config.js'), configScript());
