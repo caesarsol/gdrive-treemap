@@ -42,8 +42,9 @@ Signing in needs an OAuth client ID of your own (free, a few minutes):
 4. **Credentials → Create credentials → OAuth client ID → Web application**. Under **Authorized
    JavaScript origins** add every origin you serve the page from, e.g. `http://localhost:8080` and
    `https://<you>.github.io`. No redirect URI is needed.
-5. Paste the client ID on the start page (it is remembered in the browser), or set it in `config.js`
-   for a deployment, or pass it as `?client_id=…`.
+5. Give the app the client ID through the `GOOGLE_CLIENT_ID` environment variable (see below). It is
+   never committed: `config.js` is generated from it. Without one, the start page asks for a client ID
+   (remembered in the browser), and `?client_id=…` works too.
 
 The client ID is not a secret. The app asks for `drive.metadata.readonly` only: names, sizes and
 folders, never file contents. The access token lives in the page's memory and is revoked on sign out.
@@ -51,10 +52,20 @@ folders, never file contents. The access token lives in the page's memory and is
 ## Run locally
 
 ```sh
-npm start            # http://localhost:8080/
+GOOGLE_CLIENT_ID=… npm start     # http://localhost:8080/
 ```
 
-Any static file server works: there is no build step (plain ES modules).
+There is no bundling (plain ES modules): the dev server only generates `config.js` from the environment.
+
+## Deploy
+
+`.github/workflows/pages.yml` deploys to GitHub Pages on every push to `main`. It needs, once:
+
+- **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- **Settings → Secrets and variables → Actions → Variables → New repository variable**:
+  `GOOGLE_CLIENT_ID` = your client ID.
+
+Elsewhere, `GOOGLE_CLIENT_ID=… node scripts/build.mjs` writes the site to `_site/` for any static host.
 
 ## Tests
 

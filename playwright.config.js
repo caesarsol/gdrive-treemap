@@ -16,5 +16,7 @@ export default defineConfig({
     command: 'node scripts/serve.mjs 4173',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
+    // The tests sign in through the client ID field, which a configured ID hides.
+    env: { GOOGLE_CLIENT_ID: '' },
   },
 });
