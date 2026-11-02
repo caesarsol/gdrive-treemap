@@ -23,7 +23,9 @@ web allows them.
 - **Shallow**: draws the current folder's children as single blocks.
 - **Zoom**: click anywhere inside a folder to enter it, one level per click (the folder a click would
   enter is outlined while hovering); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
-  sits right in the current folder to open it in Drive (quicker-look's "Show in Finder").
+  sits right in the current folder to open that folder in Drive, or the trash for a trashed file, where
+  it is one click from deletion (quicker-look's "Show in Finder"; Drive has no link that also selects
+  the file).
 - **Progressive loading**: the treemap fills in while Drive is listed, 1,000 items per request.
 - **Elsewhere**: files you own that sit outside your folders still use your quota. They are gathered
   under a virtual folder, grouped by where they really are: one group per folder someone else shared
@@ -102,7 +104,7 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
   not drawn.
 - "Show hidden files" became "Show trashed files": Drive has no hidden files, but its trash takes space.
 - A click inside a folder enters it instead of revealing it, since Drives are much larger than the
-  folders Quick Look previews; files of the current folder open in Drive.
+  folders Quick Look previews; files of the current folder open their folder in Drive.
 - Icons are [Phosphor Icons](https://phosphoricons.com/) (MIT), one per file type, vendored in
   `assets/icons/` by `scripts/icons.mjs`; there are no content thumbnails (they would need extra requests).
 

@@ -12,6 +12,7 @@ const $ = (id) => document.getElementById(id);
 
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
+const DRIVE_TRASH = 'https://drive.google.com/drive/trash';
 const ICON_OPACITY = 0.9;
 const LABEL_FONT_SIZE = 12;
 const LABEL_OPACITY = 0.95;
@@ -555,14 +556,21 @@ function topLevelIndex(index) {
 
 /**
  * What a click on tile `index` does: anywhere inside a folder enters that folder, one level per
- * click; a file right in the current folder opens in Drive, as quicker-look reveals it in Finder.
+ * click; a file right in the current folder opens that folder in Drive, where it is one click from
+ * deletion, as quicker-look reveals a file in Finder. (Drive has no link that also selects the file.)
  */
 function clickAction(index) {
   if (index == null) return null;
   const top = tiles[topLevelIndex(index)];
   if (top.isDirectory && top.node) return () => zoomTo(top.node);
-  if (top.smallFiles === 0 && top.node?.link) return () => window.open(top.node.link, '_blank', 'noopener');
-  return null;
+  const folder = top.smallFiles === 0 && top.node && folderLinkOf(top.node);
+  return folder ? () => window.open(folder, '_blank', 'noopener') : null;
+}
+
+/** Where Drive shows a file of the current folder: the folder itself, or the trash. */
+function folderLinkOf(node) {
+  if (node.trashed) return state.source === 'drive' ? DRIVE_TRASH : null;
+  return zoomPath().at(-1).link;
 }
 
 canvas.addEventListener('click', (event) => clickAction(pointerTile(event))?.());

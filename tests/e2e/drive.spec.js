@@ -136,11 +136,11 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.locator('#crumbs').getByRole('button', { name: 'My Drive' }).click();
   await expect(page.locator('#description')).toBeHidden();
 
-  // Clicking a file right in the current folder opens it in Drive.
+  // Clicking a file right in the current folder opens that folder in Drive, to delete it from there.
   const report = await findTile(page, { name: 'report.pdf', folders: '' });
   const popup = page.waitForEvent('popup');
   await page.mouse.click(report.x, report.y);
-  await expect(await popup).toHaveURL(link('report'));
+  await expect(await popup).toHaveURL('https://drive.google.com/drive/my-drive');
 
   // Reloading within the hour keeps the sign-in: straight back to the drive, with the same token.
   const before = authorizations.length;
