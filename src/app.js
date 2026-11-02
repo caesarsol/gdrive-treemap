@@ -12,9 +12,11 @@ const $ = (id) => document.getElementById(id);
 
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
-const ICON_OPACITY = 0.55;
+const ICON_OPACITY = 0.9;
 const LABEL_FONT_SIZE = 12;
-const LABEL_OPACITY = 0.75;
+const LABEL_OPACITY = 0.95;
+/** Under white icons and names, so they read on the light tiles (yellow, pink) too. */
+const GLYPH_SHADOW = { color: 'rgba(0, 0, 0, 0.35)', blur: 3, offsetY: 0.5 };
 /** While listing, the tree is rebuilt at most this often (ms): cheap pages, costly rebuilds. */
 const REBUILD_INTERVAL = 500;
 
@@ -369,7 +371,9 @@ function draw() {
       strokeInside(tile, FOLDER_COLOR);
     }
   });
-  // Black glyphs, half transparent: they read on every tile colour and take its hue.
+  // White glyphs, with a soft shadow: they read on every tile colour.
+  context.save();
+  setGlyphShadow();
   context.globalAlpha = ICON_OPACITY;
   for (const icon of icons) {
     const img = image(icon.src);
@@ -377,6 +381,7 @@ function draw() {
   }
   context.globalAlpha = 1;
   if (!state.hoveredKind && state.hovered != null) drawLabel(state.hovered);
+  context.restore();
   // Hovering a bar category outlines all its files as if each were hovered.
   const outlined = state.hoveredKind
     ? tiles.filter((t) => t.isLeaf && !t.isDirectory && t.smallFiles === 0 && t.bytes > 0 && t.kind === state.hoveredKind)
@@ -390,6 +395,12 @@ function draw() {
   for (const tile of outlined) strokeInside(tile, 'white');
 }
 
+function setGlyphShadow() {
+  context.shadowColor = GLYPH_SHADOW.color;
+  context.shadowBlur = GLYPH_SHADOW.blur;
+  context.shadowOffsetY = GLYPH_SHADOW.offsetY;
+}
+
 /** The hovered tile's name under its icon, in the icon's colour, when the tile has room for it. */
 function drawLabel(index) {
   const icon = icons.find((i) => i.index === index);
@@ -400,7 +411,7 @@ function drawLabel(index) {
   if (top + LABEL_FONT_SIZE > tile.y + tile.h - 2 || maxWidth < 24) return;
   context.font = `600 ${LABEL_FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
   context.textBaseline = 'top';
-  context.fillStyle = `rgba(0, 0, 0, ${LABEL_OPACITY})`;
+  context.fillStyle = `rgba(255, 255, 255, ${LABEL_OPACITY})`;
   context.fillText(ellipsize(tile.name, maxWidth), icon.x, top);
 }
 

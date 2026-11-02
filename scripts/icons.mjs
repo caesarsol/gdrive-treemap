@@ -17,7 +17,7 @@ for (const name of ICON_NAMES) {
     // A size of their own, which canvas needs to draw them in every browser, and an explicit colour,
     // since currentColor means nothing in an image.
     .replace('<svg ', '<svg width="256" height="256" ')
-    .replace('fill="currentColor"', 'fill="#000"');
+    .replace('fill="currentColor"', 'fill="#fff"');
   writeFileSync(join(out, `${name}.svg`), svg);
 }
 copyFileSync(join(phosphor, 'LICENSE'), join(out, 'LICENSE'));
