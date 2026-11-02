@@ -18,6 +18,8 @@ const TRASHED_SHADE = 'rgba(0, 0, 0, 0.35)';
 const ICON_OPACITY = 0.9;
 const LABEL_FONT_SIZE = 12;
 const LABEL_OPACITY = 0.95;
+/** The name's distance from the tile's left edge, and from the icon above it. */
+const LABEL_PADDING = { left: 10, top: 5 };
 /** Under white icons and names, so they read on the light tiles (yellow, pink) too. */
 const GLYPH_SHADOW = { color: 'rgba(0, 0, 0, 0.35)', blur: 3, offsetY: 0.5 };
 /** While listing, the tree is rebuilt at most this often (ms): cheap pages, costly rebuilds. */
@@ -524,7 +526,6 @@ function draw() {
   for (const tile of outlined) strokeInside(tile, 'white');
 }
 
-/** A small glyph on a dark disc, centred on the icon's bottom-right corner. */
 /** Fills `path` (a function tracing it) with the tile's colour: its gradient, darkened if trashed. */
 function paintTile(tile, path) {
   const [from, to] = gradientFor(tile);
@@ -569,13 +570,14 @@ function drawLabel(index) {
   if (!icon) return;
   const tile = tiles[index];
   // Below the badge too, which sticks out of the icon's corner.
-  const top = icon.y + icon.side + 3 + (icon.badge ? icon.side * 0.18 : 0);
-  const maxWidth = tile.w - 8;
+  const top = icon.y + icon.side + LABEL_PADDING.top + (icon.badge ? icon.side * 0.18 : 0);
+  const left = tile.x + LABEL_PADDING.left;
+  const maxWidth = tile.w - LABEL_PADDING.left - 4;
   if (top + LABEL_FONT_SIZE > tile.y + tile.h - 2 || maxWidth < 24) return;
   context.font = `600 ${LABEL_FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
   context.textBaseline = 'top';
   context.fillStyle = `rgba(255, 255, 255, ${LABEL_OPACITY})`;
-  context.fillText(ellipsize(tile.name, maxWidth), icon.x, top);
+  context.fillText(ellipsize(tile.name, maxWidth), left, top);
 }
 
 /** `text` cut to fit `maxWidth` in the current font, with an ellipsis. */
