@@ -17,7 +17,7 @@ web allows them.
 - **Small files merged**: items too small to see become one grey tile that keeps their area
   ("1,204 small files · ~12 KB each").
 - **Category bar** with legend; hovering a category outlines all its files in the treemap.
-- **Status line** with the hovered item's path and size; the hovered tile also shows its name under its icon.
+- **Status line** with the hovered item's path and size; the outlined tile also shows its name under its icon.
 - **.Trash**: trashed items sit in a virtual `.Trash` folder (it opens Drive's trash), as Drive's trash
   shows them: what was trashed itself, a trashed folder's contents still inside it. Their tiles are
   darker, and their icons carry a small trash can.
@@ -28,8 +28,8 @@ web allows them.
   block for Gmail & Photos (Drive only reports them together; it opens Google One's storage manager)
   and a dashed one for the free space. Each has a checkbox to leave it out; with both off, the
   treemap is My Drive alone.
-- **Zoom**: click anywhere inside a folder to enter it, one level per click (the folder a click would
-  enter is outlined while hovering); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
+- **Zoom**: click anywhere inside a folder to enter it, one level per click (hovering outlines what a click
+  would open: the folder, not the file inside it under the pointer); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
   sits right in the current folder to open that folder in Drive, or the trash for a trashed file, where
   it is one click from deletion (quicker-look's "Show in Finder"; Drive has no link that also selects
   the file).

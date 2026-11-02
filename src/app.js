@@ -511,18 +511,14 @@ function draw() {
     if (badge) drawBadge(badge, icon);
   }
   context.globalAlpha = 1;
-  if (!state.hoveredKind && state.hovered != null) drawLabel(state.hovered);
+  if (!state.hoveredKind && state.hovered != null) drawLabel(topLevelIndex(state.hovered));
   context.restore();
-  // Hovering a bar category outlines all its files as if each were hovered.
+  // Hovering a bar category outlines all its files; hovering the treemap outlines what a click
+  // there opens: the current folder's child under the pointer, not a file deeper inside it.
   const outlined = state.hoveredKind
     ? tiles.filter((t) => t.isLeaf && !t.isDirectory && t.smallFiles === 0 && t.bytes > 0 && t.kind === state.hoveredKind)
-    : state.hovered != null ? [tiles[state.hovered]] : [];
-  // The folder a click would enter, when the pointer is somewhere inside it.
-  if (!state.hoveredKind && state.hovered != null) {
-    const top = tiles[topLevelIndex(state.hovered)];
-    if (top !== tiles[state.hovered] && top.isDirectory) strokeInside(top, 'rgba(255, 255, 255, 0.8)');
-  }
-  // On a hovered folder this exactly repaints its border in white.
+    : state.hovered != null ? [tiles[topLevelIndex(state.hovered)]] : [];
+  // On a folder this exactly repaints its border in white.
   for (const tile of outlined) strokeInside(tile, 'white');
 }
 
