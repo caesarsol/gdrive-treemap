@@ -283,28 +283,24 @@ function zoomTo(node) {
 }
 
 function zoomOut() {
-  state.hovered = null;
-  if (state.zoom.length > 0) {
-    state.zoom = state.zoom.slice(0, -1);
-  } else if (currentAccount() && !state.accountView) {
-    state.accountView = true;
-  } else {
-    return;
-  }
-  render();
+  if (state.zoom.length === 0 && !(currentAccount() && !state.accountView)) return;
+  leaving(() => {
+    if (state.zoom.length > 0) state.zoom = state.zoom.slice(0, -1);
+    else state.accountView = true;
+  });
 }
 
 /** Goes to the `i`th node of the current path. */
 function zoomToPathIndex(i) {
   const offset = currentAccount() ? 1 : 0;
-  if (i < offset) {
-    state.accountView = true;
-  } else {
-    state.accountView = false;
-    state.zoom = state.zoom.slice(0, i - offset);
-  }
-  state.hovered = null;
-  render();
+  leaving(() => {
+    if (i < offset) {
+      state.accountView = true;
+    } else {
+      state.accountView = false;
+      state.zoom = state.zoom.slice(0, i - offset);
+    }
+  });
 }
 
 // ---- Rendering --------------------------------------------------------------------------------
@@ -646,7 +642,7 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 // Entering a folder zooms into it: the folder's tile grows to fill the treemap, its new layout
-// drawn in it, while the old view swells around it and fades out.
+// drawn in it, while the old view swells around it and fades out. Going up zooms back out.
 const ZOOM_DURATION = 300;
 let zooming = false;
 let zoomFrame = 0;
@@ -655,10 +651,28 @@ function zoomInto(tile) {
   const from = { x: tile.x, y: tile.y, w: tile.w, h: tile.h };
   const before = snapshot();
   zoomTo(tile.node);
-  if (!before || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const after = snapshot();
+  const after = before && animates() && snapshot();
   if (after) animateZoom(before, after, from);
 }
+
+/**
+ * Goes up to an ancestor (`change` updates the zoom), zooming out: the folder left shrinks back
+ * into its tile in the ancestor, which settles around it.
+ */
+function leaving(change) {
+  const left = zoomPath().map((node) => node.id);
+  const before = snapshot();
+  state.hovered = null;
+  change();
+  render();
+  // The ancestor's child that holds the folder left: where it shrinks to.
+  const child = left[zoomPath().length];
+  const tile = tiles.find((t) => t.parent === 0 && t.node?.id === child);
+  const after = before && tile && animates() && snapshot();
+  if (after) animateZoom(after, before, tile, { out: true });
+}
+
+const animates = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** A copy of the canvas as it is drawn now. */
 function snapshot() {
@@ -670,7 +684,12 @@ function snapshot() {
   return copy;
 }
 
-function animateZoom(before, after, from) {
+/**
+ * Animates between a folder's view (`inner`) and its parent's (`outer`), where the folder fills
+ * `from`: zooming in, `inner` grows from `from` to the whole treemap while `outer` swells around it
+ * and fades out; zooming `out`, the same backwards.
+ */
+function animateZoom(outer, inner, from, { out = false } = {}) {
   cancelAnimationFrame(zoomFrame);
   zooming = true;
   const width = canvas.width;
@@ -682,7 +701,7 @@ function animateZoom(before, after, from) {
   const ease = (t) => 1 - (1 - t) ** 3;
   const frame = (now) => {
     const t = Math.min(1, (now - startTime) / ZOOM_DURATION);
-    const e = ease(t);
+    const e = out ? 1 - ease(t) : ease(t);
     const r = {
       x: start.x * (1 - e), y: start.y * (1 - e),
       w: start.w + (width - start.w) * e, h: start.h + (height - start.h) * e,
@@ -693,9 +712,9 @@ function animateZoom(before, after, from) {
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, width, height);
     context.globalAlpha = 1 - e;
-    context.drawImage(before, r.x - start.x * sx, r.y - start.y * sy, width * sx, height * sy);
+    context.drawImage(outer, r.x - start.x * sx, r.y - start.y * sy, width * sx, height * sy);
     context.globalAlpha = Math.min(1, 0.35 + e);
-    context.drawImage(after, r.x, r.y, r.w, r.h);
+    context.drawImage(inner, r.x, r.y, r.w, r.h);
     context.restore();
     if (t < 1) {
       zoomFrame = requestAnimationFrame(frame);
