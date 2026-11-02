@@ -50,7 +50,9 @@ a { color: var(--accent); }
   padding: 8px 16px;
   border-bottom: 1px solid var(--line);
 }
-.brand { font-weight: 600; }
+/* As far from its icon as the icon is from the window edge (the bar's padding). */
+.brand { display: flex; align-items: center; gap: 16px; font-weight: 600; text-shadow: 0 0 10px rgba(102, 191, 255, 0.7); }
+.brand img { flex: none; }
 .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--secondary); }
 .badge { background: #4a3a10; color: #ffd60a; border-radius: 4px; padding: 1px 6px; font-size: 11px; }
 
