@@ -3,6 +3,8 @@
 // Google Identity Services hands the page a short-lived access token (implicit grant), and the
 // Drive REST API answers the page directly, since it allows cross-origin requests.
 
+import { FOLDER_MIME } from './kinds.js';
+
 const GIS_SRC = 'https://accounts.google.com/gsi/client';
 const API = 'https://www.googleapis.com/drive/v3';
 /** Names, sizes and folders only: the app never sees file contents. */
@@ -75,23 +77,28 @@ export function fetchRoot(token) {
 
 /**
  * Every file and folder you own, trash included (it counts against the quota), a page at a time.
- * `onPage(allSoFar)` runs after each page; resolves with the complete list.
+ * Folders come first: by the time a file arrives its folder is known, so the treemap fills in
+ * folder by folder instead of parking files under "Elsewhere" until their folder shows up.
+ * `onPage(allSoFar, done)` runs after each page; resolves with the complete list.
  */
 export async function fetchAllFiles(token, onPage, { signal } = {}) {
   const files = [];
-  let pageToken;
-  do {
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    const page = await get(token, 'files', {
-      q: "'me' in owners",
-      spaces: 'drive',
-      pageSize: '1000',
-      fields: `nextPageToken,files(${FILE_FIELDS})`,
-      ...(pageToken ? { pageToken } : {}),
-    });
-    files.push(...(page.files ?? []));
-    pageToken = page.nextPageToken;
-    onPage?.(files, !pageToken);
-  } while (pageToken);
+  const queries = [`'me' in owners and mimeType = '${FOLDER_MIME}'`, `'me' in owners and mimeType != '${FOLDER_MIME}'`];
+  for (const [i, q] of queries.entries()) {
+    let pageToken;
+    do {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const page = await get(token, 'files', {
+        q,
+        spaces: 'drive',
+        pageSize: '1000',
+        fields: `nextPageToken,files(${FILE_FIELDS})`,
+        ...(pageToken ? { pageToken } : {}),
+      });
+      files.push(...(page.files ?? []));
+      pageToken = page.nextPageToken;
+      onPage?.(files, i === queries.length - 1 && !pageToken);
+    } while (pageToken);
+  }
   return files;
 }

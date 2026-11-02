@@ -55,11 +55,15 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
       case '/drive/v3/files/root':
         return json({ id: 'root-id', name: 'My Drive', webViewLink: 'https://drive.google.com/drive/my-drive' });
       case '/drive/v3/files': {
+        // Folders are listed first, in one page; then the files, in two.
+        const folders = url.searchParams.get('q').includes("mimeType = '");
         const pageToken = url.searchParams.get('pageToken');
-        pageTokens.push(pageToken);
+        pageTokens.push(`${folders ? 'folders' : 'files'} ${pageToken}`);
+        const isFolder = (f) => f.mimeType === FOLDER;
+        if (folders) return json({ files: PAGES.flat().filter(isFolder) });
         return pageToken === 'page-2'
-          ? json({ files: PAGES[1] })
-          : json({ nextPageToken: 'page-2', files: PAGES[0] });
+          ? json({ files: PAGES[1].filter((f) => !isFolder(f)) })
+          : json({ nextPageToken: 'page-2', files: PAGES[0].filter((f) => !isFolder(f)) });
       }
       default:
         return route.fulfill({ status: 404, headers: cors, json: { error: { message: 'Not found' } } });
@@ -72,11 +76,11 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await page.getByLabel('OAuth client ID').fill('1234-test.apps.googleusercontent.com');
   await page.getByRole('button', { name: 'Sign in with Google' }).click();
 
-  // Both pages listed, every request with the token.
+  // Folders first, then both pages of files, every request with the token.
   await expect(page.locator('#panel')).toBeVisible();
   await expect(page.locator('#caption')).toHaveText('owned by you, trash included');
-  expect(pageTokens).toEqual([null, 'page-2']);
-  expect(authorizations.length).toBe(4);
+  expect(pageTokens).toEqual(['folders null', 'files null', 'files page-2']);
+  expect(authorizations.length).toBe(5);
   expect(new Set(authorizations)).toEqual(new Set(['Bearer test-token']));
 
   // Header: account, quota, totals and counts of the mocked drive.
