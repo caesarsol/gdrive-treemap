@@ -103,7 +103,8 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 
 ### Limits
 
-- Only *My Drive* items you own are listed: shared drives and files shared with you do not use your
-  quota. The quota in the top bar is account-wide (it includes Gmail and Google Photos).
+- Only items you own are listed: files shared with you use their owner's quota, not yours, and shared
+  drives use their organisation's. The top bar splits your account's quota into Drive's part, which
+  the treemap shows, and what Gmail and Google Photos use.
 - Very large drives take a while to list (about one request per 1,000 items) and the token lasts an
   hour.

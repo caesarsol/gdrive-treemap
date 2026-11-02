@@ -108,5 +108,7 @@ export function demoForeignFolders() {
 export function demoQuota(files) {
   const usage = files.reduce((s, f) => s + Number(f.quotaBytesUsed ?? 0), 0);
   const trash = files.filter((f) => f.trashed).reduce((s, f) => s + Number(f.quotaBytesUsed ?? 0), 0);
-  return { limit: String(100e9), usage: String(usage), usageInDrive: String(usage), usageInDriveTrash: String(trash) };
+  // Gmail and Google Photos share the quota with Drive.
+  const others = 9.3e9;
+  return { limit: String(100e9), usage: String(usage + others), usageInDrive: String(usage), usageInDriveTrash: String(trash) };
 }

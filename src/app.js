@@ -284,13 +284,20 @@ function renderHeader() {
   $('caption').textContent = state.loading
     ? `listing… ${formatCount(state.files.length)} items so far`
     : state.includeTrashed ? 'owned by you, trash included' : 'owned by you, trash excluded';
-  $('quota').textContent = state.quota
-    ? state.quota.limit
-      ? `${formatBytes(Number(state.quota.usage))} of ${formatBytes(Number(state.quota.limit))} used`
-      : `${formatBytes(Number(state.quota.usage))} used`
-    : '';
+  $('quota').textContent = state.quota ? quotaText(state.quota) : '';
   $('show-trashed').checked = state.includeTrashed;
   $('shallow').checked = state.shallow;
+}
+
+/**
+ * The account's storage, which Drive shares with Gmail and Google Photos: the treemap only shows the
+ * Drive part, so the rest is named apart.
+ */
+function quotaText({ limit, usage, usageInDrive }) {
+  const used = limit ? `${formatBytes(Number(usage))} of ${formatBytes(Number(limit))} used` : `${formatBytes(Number(usage))} used`;
+  if (usageInDrive == null) return used;
+  const others = Math.max(0, Number(usage) - Number(usageInDrive));
+  return `In Drive ${formatBytes(Number(usageInDrive))} · Gmail & Photos ${formatBytes(others)} · ${used}`;
 }
 
 /** Stacked bar of bytes per file category, largest first, with its legend. */

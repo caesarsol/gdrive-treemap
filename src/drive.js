@@ -66,7 +66,11 @@ async function get(token, path, params = {}) {
   return response.json();
 }
 
-/** The signed-in user and their storage quota (all strings of bytes, `limit` absent if unlimited). */
+/**
+ * The signed-in user and their storage quota, strings of bytes: `usage` for the whole account
+ * (Gmail and Google Photos included), `usageInDrive` and `usageInDriveTrash` for Drive alone, and
+ * `limit`, absent if unlimited.
+ */
 export function fetchAbout(token) {
   return get(token, 'about', { fields: 'user(displayName,emailAddress),storageQuota' });
 }

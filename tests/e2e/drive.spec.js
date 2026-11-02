@@ -51,7 +51,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
     const json = (body) => route.fulfill({ headers: cors, json: body });
     switch (url.pathname) {
       case '/drive/v3/about':
-        return json({ user: { displayName: 'Test User', emailAddress: 'test@example.com' }, storageQuota: { limit: '15000000000', usage: '4950000000' } });
+        return json({ user: { displayName: 'Test User', emailAddress: 'test@example.com' }, storageQuota: { limit: '15000000000', usage: '7950000000', usageInDrive: '4950000000' } });
       case '/drive/v3/files/someone-elses-folder':
         return json({ id: 'someone-elses-folder', name: 'Team stuff', webViewLink: link('someone-elses-folder'), owners: [{ displayName: 'Ada' }] });
       case '/drive/v3/files/root':
@@ -87,7 +87,8 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
 
   // Header: account, quota, totals and counts of the mocked drive.
   await expect(page.locator('#account-name')).toHaveText('test@example.com');
-  await expect(page.locator('#quota')).toHaveText('4.95 GB of 15 GB used');
+  // The quota is the account's: Drive's part is named apart from Gmail and Photos.
+  await expect(page.locator('#quota')).toHaveText('In Drive 4.95 GB · Gmail & Photos 3 GB · 7.95 GB of 15 GB used');
   await expect(page.locator('#demo-badge')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
   await expect(page.locator('#total-bytes')).toHaveText('4.95 GB');
