@@ -13,6 +13,8 @@ const $ = (id) => document.getElementById(id);
 
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
+/** Over trashed files' tiles, to set them apart. */
+const TRASHED_SHADE = 'rgba(0, 0, 0, 0.35)';
 const ICON_OPACITY = 0.9;
 const LABEL_FONT_SIZE = 12;
 const LABEL_OPACITY = 0.95;
@@ -490,12 +492,7 @@ function draw() {
         context.restore();
         return;
       }
-      const [from, to] = gradientFor(tile);
-      const gradient = context.createLinearGradient(tile.x, tile.y, tile.x + tile.w, tile.y + tile.h);
-      gradient.addColorStop(0, from);
-      gradient.addColorStop(1, to);
-      context.fillStyle = gradient;
-      context.fillRect(tile.x, tile.y, tile.w, tile.h);
+      paintTile(tile, () => context.rect(tile.x, tile.y, tile.w, tile.h));
     } else if (index > 0) {
       // The border fills the inset that layoutTreemap leaves around the folder's content.
       strokeInside(tile, FOLDER_COLOR);
@@ -528,18 +525,35 @@ function draw() {
 }
 
 /** A small glyph on a dark disc, centred on the icon's bottom-right corner. */
+/** Fills `path` (a function tracing it) with the tile's colour: its gradient, darkened if trashed. */
+function paintTile(tile, path) {
+  const [from, to] = gradientFor(tile);
+  const gradient = context.createLinearGradient(tile.x, tile.y, tile.x + tile.w, tile.y + tile.h);
+  gradient.addColorStop(0, from);
+  gradient.addColorStop(1, to);
+  for (const fill of tile.node?.trashed ? [gradient, TRASHED_SHADE] : [gradient]) {
+    context.fillStyle = fill;
+    context.beginPath();
+    path();
+    context.fill();
+  }
+}
+
+/**
+ * A small glyph on the icon's bottom-right corner. The tile's own colour is painted under it first,
+ * so the icon does not show through; the glyph's shadow makes a halo around it.
+ */
 function drawBadge(img, icon) {
+  const tile = tiles[icon.index];
   const radius = icon.side * 0.3;
   const cx = icon.x + icon.side - radius * 0.4;
   const cy = icon.y + icon.side - radius * 0.4;
   context.save();
+  context.shadowColor = 'transparent';
   context.globalAlpha = 1;
-  context.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  context.beginPath();
-  context.arc(cx, cy, radius, 0, 2 * Math.PI);
-  context.fill();
+  paintTile(tile, () => context.arc(cx, cy, radius, 0, 2 * Math.PI));
   context.restore();
-  const side = radius * 1.4;
+  const side = radius * 1.5;
   context.drawImage(img, cx - side / 2, cy - side / 2, side, side);
 }
 
