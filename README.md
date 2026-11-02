@@ -17,7 +17,7 @@ web allows them.
 - **Small files merged**: items too small to see become one grey tile that keeps their area
   ("1,204 small files · ~12 KB each").
 - **Category bar** with legend; hovering a category outlines all its files in the treemap.
-- **Status line** with the hovered item's path and size.
+- **Status line** with the hovered item's path and size; the hovered tile also shows its name under its icon.
 - **Show trashed files**: trash counts against the quota, so it is included by default. Toggling it
   switches instantly between two prebuilt trees (quicker-look's "Show hidden files").
 - **Shallow**: draws the current folder's children as single blocks.

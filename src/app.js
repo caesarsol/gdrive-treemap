@@ -13,6 +13,8 @@ const $ = (id) => document.getElementById(id);
 /** Largest icon drawn inside a tile, in px. */
 const MAX_ICON_SIDE = 48;
 const ICON_OPACITY = 0.55;
+const LABEL_FONT_SIZE = 12;
+const LABEL_OPACITY = 0.75;
 /** While listing, the tree is rebuilt at most this often (ms): cheap pages, costly rebuilds. */
 const REBUILD_INTERVAL = 500;
 
@@ -374,6 +376,7 @@ function draw() {
     if (img) context.drawImage(img, icon.x, icon.y, icon.side, icon.side);
   }
   context.globalAlpha = 1;
+  if (!state.hoveredKind && state.hovered != null) drawLabel(state.hovered);
   // Hovering a bar category outlines all its files as if each were hovered.
   const outlined = state.hoveredKind
     ? tiles.filter((t) => t.isLeaf && !t.isDirectory && t.smallFiles === 0 && t.bytes > 0 && t.kind === state.hoveredKind)
@@ -385,6 +388,33 @@ function draw() {
   }
   // On a hovered folder this exactly repaints its border in white.
   for (const tile of outlined) strokeInside(tile, 'white');
+}
+
+/** The hovered tile's name under its icon, in the icon's colour, when the tile has room for it. */
+function drawLabel(index) {
+  const icon = icons.find((i) => i.index === index);
+  if (!icon) return;
+  const tile = tiles[index];
+  const top = icon.y + icon.side + 3;
+  const maxWidth = tile.w - 8;
+  if (top + LABEL_FONT_SIZE > tile.y + tile.h - 2 || maxWidth < 24) return;
+  context.font = `600 ${LABEL_FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
+  context.textBaseline = 'top';
+  context.fillStyle = `rgba(0, 0, 0, ${LABEL_OPACITY})`;
+  context.fillText(ellipsize(tile.name, maxWidth), icon.x, top);
+}
+
+/** `text` cut to fit `maxWidth` in the current font, with an ellipsis. */
+function ellipsize(text, maxWidth) {
+  if (context.measureText(text).width <= maxWidth) return text;
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (context.measureText(`${text.slice(0, mid)}…`).width <= maxWidth) low = mid;
+    else high = mid - 1;
+  }
+  return `${text.slice(0, low)}…`;
 }
 
 function strokeInside(tile, color) {
