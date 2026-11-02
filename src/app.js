@@ -482,6 +482,7 @@ function gradientFor(tile) {
 }
 
 function draw() {
+  if (zooming) return;
   context.clearRect(0, 0, canvas.width, canvas.height);
   tiles.forEach((tile, index) => {
     if (tile.isLeaf) {
@@ -644,6 +645,68 @@ canvas.addEventListener('mouseleave', () => {
   renderStatus();
 });
 
+// Entering a folder zooms into it: the folder's tile grows to fill the treemap, its new layout
+// drawn in it, while the old view swells around it and fades out.
+const ZOOM_DURATION = 300;
+let zooming = false;
+let zoomFrame = 0;
+
+function zoomInto(tile) {
+  const from = { x: tile.x, y: tile.y, w: tile.w, h: tile.h };
+  const before = snapshot();
+  zoomTo(tile.node);
+  if (!before || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const after = snapshot();
+  if (after) animateZoom(before, after, from);
+}
+
+/** A copy of the canvas as it is drawn now. */
+function snapshot() {
+  if (!canvas.width || !canvas.height) return null;
+  const copy = document.createElement('canvas');
+  copy.width = canvas.width;
+  copy.height = canvas.height;
+  copy.getContext('2d').drawImage(canvas, 0, 0);
+  return copy;
+}
+
+function animateZoom(before, after, from) {
+  cancelAnimationFrame(zoomFrame);
+  zooming = true;
+  const width = canvas.width;
+  const height = canvas.height;
+  // From CSS pixels, which tiles use, to the canvas's own.
+  const k = width / canvas.getBoundingClientRect().width;
+  const start = { x: from.x * k, y: from.y * k, w: from.w * k, h: from.h * k };
+  const startTime = performance.now();
+  const ease = (t) => 1 - (1 - t) ** 3;
+  const frame = (now) => {
+    const t = Math.min(1, (now - startTime) / ZOOM_DURATION);
+    const e = ease(t);
+    const r = {
+      x: start.x * (1 - e), y: start.y * (1 - e),
+      w: start.w + (width - start.w) * e, h: start.h + (height - start.h) * e,
+    };
+    const sx = r.w / start.w;
+    const sy = r.h / start.h;
+    context.save();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, width, height);
+    context.globalAlpha = 1 - e;
+    context.drawImage(before, r.x - start.x * sx, r.y - start.y * sy, width * sx, height * sy);
+    context.globalAlpha = Math.min(1, 0.35 + e);
+    context.drawImage(after, r.x, r.y, r.w, r.h);
+    context.restore();
+    if (t < 1) {
+      zoomFrame = requestAnimationFrame(frame);
+    } else {
+      zooming = false;
+      draw();
+    }
+  };
+  zoomFrame = requestAnimationFrame(frame);
+}
+
 /** The current folder's child that holds tile `index` (the tile itself when it is one). */
 function topLevelIndex(index) {
   while (tiles[index].parent > 0) index = tiles[index].parent;
@@ -658,7 +721,7 @@ function topLevelIndex(index) {
 function clickAction(index) {
   if (index == null) return null;
   const top = tiles[topLevelIndex(index)];
-  if (top.isDirectory && top.node) return () => zoomTo(top.node);
+  if (top.isDirectory && top.node) return () => zoomInto(top);
   // The account's blocks: Gmail & Photos opens Google One, the free space does nothing.
   if (top.node?.virtual) return top.node.link ? () => openInAccount(top.node.link) : null;
   const folder = top.smallFiles === 0 && top.node && folderLinkOf(top.node);

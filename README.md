@@ -28,7 +28,7 @@ web allows them.
   block for Gmail & Photos (Drive only reports them together; it opens Google One's storage manager)
   and a dashed one for the free space. Each has a checkbox to leave it out; with both off, the
   treemap is My Drive alone.
-- **Zoom**: click anywhere inside a folder to enter it, one level per click (hovering outlines what a click
+- **Zoom**: click anywhere inside a folder to enter it, with a short zoom-in animation, one level per click (hovering outlines what a click
   would open: the folder, not the file inside it under the pointer); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
   sits right in the current folder to open that folder in Drive, or the trash for a trashed file, where
   it is one click from deletion (quicker-look's "Show in Finder"; Drive has no link that also selects
