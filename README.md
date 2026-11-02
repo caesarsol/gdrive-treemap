@@ -21,6 +21,10 @@ web allows them.
 - **Show trashed files**: trash counts against the quota, so it is included by default. Toggling it
   switches instantly between two prebuilt trees (quicker-look's "Show hidden files").
 - **Shallow**: draws the current folder's children as single blocks.
+- **Google account level**: above My Drive, the treemap shows the rest of your Google storage: one
+  block for Gmail & Photos (Drive only reports them together; it opens Google One's storage manager)
+  and a dashed one for the free space. Each has a checkbox to leave it out; with both off, the
+  treemap is My Drive alone.
 - **Zoom**: click anywhere inside a folder to enter it, one level per click (the folder a click would
   enter is outlined while hovering); the breadcrumb, `Esc` or `Backspace` go back up. Click a file that
   sits right in the current folder to open that folder in Drive, or the trash for a trashed file, where
@@ -91,6 +95,7 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 | File | Role |
 | --- | --- |
 | `src/drive.js` | Google Identity Services token client; `about`, `files/root` and paged `files.list` (`'me' in owners`, trash included). |
+| `src/account.js` | The Google account level: My Drive, Gmail & Photos, free space, from the quota. |
 | `src/tree.js` | Flat file list → tree (sizes from `quotaBytesUsed`), trash filtering, the virtual *Elsewhere* folder. |
 | `src/treemap.js` | Squarified layout (Bruls, Huizing, van Wijk), small-files merging, hit testing: a port of `Treemap.swift`. |
 | `src/kinds.js` | Categories from MIME type then extension, colours, cushion gradients. |
@@ -111,7 +116,8 @@ npm run test:e2e     # Playwright: a demo walkthrough, and the Google path with 
 ### Limits
 
 - Only items you own are listed: files shared with you use their owner's quota, not yours, and shared
-  drives use their organisation's. The top bar splits your account's quota into Drive's part, which
-  the treemap shows, and what Gmail and Google Photos use.
+  drives use their organisation's. The top bar splits your account's quota into Drive's part and what
+  Gmail and Google Photos use. Gmail and Photos cannot be measured apart, nor opened up, with Drive's
+  permission alone.
 - Very large drives take a while to list (about one request per 1,000 items) and the token lasts an
   hour.

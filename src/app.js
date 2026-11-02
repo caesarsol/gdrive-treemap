@@ -1,5 +1,6 @@
 // The page: sign-in, loading, and the treemap view after quicker-look's TreemapPreviewView.swift.
 
+import { ACCOUNT_ID, accountBytes, buildAccount } from './account.js';
 import { demoDrive, demoForeignFolders, demoQuota } from './demo.js';
 import { fetchAbout, fetchAllFiles, fetchFolderInfo, fetchRoot, requestAccessToken, revokeToken } from './drive.js';
 import { formatBytes, formatCount } from './format.js';
@@ -58,6 +59,11 @@ const state = {
   // Remembered across visits.
   includeTrashed: storage.get('includeTrashed', true),
   shallow: storage.get('shallow', false),
+  /** Show Gmail & Photos, and the free space, next to My Drive, in an account level above it. */
+  showMail: storage.get('showMail', true),
+  showFree: storage.get('showFree', true),
+  /** At the account level rather than in My Drive (when there is an account level). */
+  accountView: true,
   /** Ids of the folders zoomed into, from the root's child down. */
   zoom: [],
   hovered: null,
@@ -148,7 +154,7 @@ function startDemo() {
   state.abort?.abort();
   const { rootId, files } = demoDrive();
   Object.assign(state, {
-    source: 'demo', rootId, rootLink: null, files, loading: false, quota: demoQuota(files), zoom: [],
+    source: 'demo', rootId, rootLink: null, files, loading: false, quota: demoQuota(files), zoom: [], accountView: true,
     foreignFolders: demoForeignFolders(),
   });
   $('account-name').textContent = '';
@@ -160,7 +166,7 @@ async function startDrive() {
   state.abort?.abort();
   const abort = new AbortController();
   Object.assign(state, {
-    source: 'drive', abort, files: [], loading: true, quota: null, zoom: [], withTrashed: null, withoutTrashed: null,
+    source: 'drive', abort, files: [], loading: true, quota: null, zoom: [], accountView: true, withTrashed: null, withoutTrashed: null,
     foreignFolders: new Map(),
   });
   $('account-name').textContent = '';
@@ -238,7 +244,15 @@ function currentTree() {
   return tree ?? buildTree([], { rootId: state.rootId ?? 'root', rootLink: null });
 }
 
-/** Nodes from the root down to the zoomed folder; the zoom shrinks to what still exists. */
+/** The account level above My Drive, or null when the toggles leave My Drive alone. */
+function currentAccount() {
+  return buildAccount(currentTree(), state.quota, { mail: state.showMail, free: state.showFree });
+}
+
+/**
+ * Nodes from the root down to the zoomed folder; the zoom shrinks to what still exists.
+ * `state.zoom` holds the ids below My Drive; the account level, when there is one, sits above it.
+ */
 function zoomPath() {
   const tree = currentTree();
   const path = [tree];
@@ -247,20 +261,45 @@ function zoomPath() {
     if (!child) break;
     path.push(child);
   }
-  return path;
+  const account = currentAccount();
+  if (!account) return path;
+  return state.accountView ? [account] : [account, ...path];
 }
 
 function zoomTo(node) {
-  const path = findPath(currentTree(), node.id);
-  if (!path) return;
-  state.zoom = path.slice(1).map((n) => n.id);
   state.hovered = null;
+  if (node.id === ACCOUNT_ID) {
+    state.accountView = true;
+  } else {
+    const path = findPath(currentTree(), node.id);
+    if (!path) return;
+    state.zoom = path.slice(1).map((n) => n.id);
+    state.accountView = false;
+  }
   render();
 }
 
 function zoomOut() {
-  if (state.zoom.length === 0) return;
-  state.zoom = zoomPath().slice(1, -1).map((n) => n.id);
+  state.hovered = null;
+  if (state.zoom.length > 0) {
+    state.zoom = state.zoom.slice(0, -1);
+  } else if (currentAccount() && !state.accountView) {
+    state.accountView = true;
+  } else {
+    return;
+  }
+  render();
+}
+
+/** Goes to the `i`th node of the current path. */
+function zoomToPathIndex(i) {
+  const offset = currentAccount() ? 1 : 0;
+  if (i < offset) {
+    state.accountView = true;
+  } else {
+    state.accountView = false;
+    state.zoom = state.zoom.slice(0, i - offset);
+  }
   state.hovered = null;
   render();
 }
@@ -290,31 +329,41 @@ function renderHeader() {
     if (i > 0) crumbs.append(el('span', { className: 'sep', textContent: '›' }));
     if (i < path.length - 1) {
       const button = el('button', { type: 'button', textContent: node.name });
-      button.addEventListener('click', () => {
-        state.zoom = state.zoom.slice(0, i);
-        render();
-      });
+      button.addEventListener('click', () => zoomToPathIndex(i));
       crumbs.append(button);
     } else {
       crumbs.append(el('span', { className: 'current', textContent: node.name }));
     }
   });
   if (current.link) {
-    crumbs.append(el('a', { className: 'open', href: current.link, target: '_blank', rel: 'noopener', textContent: 'Open in Drive ↗' }));
+    const label = current.id === ACCOUNT_ID ? 'Open in Google One ↗' : 'Open in Drive ↗';
+    crumbs.append(el('a', { className: 'open', href: current.link, target: '_blank', rel: 'noopener', textContent: label }));
   }
 
-  // A folder's usage counts the folder itself; the root's already leaves itself out, and virtual
+  // A folder's usage counts the folder itself; My Drive's already leaves itself out, and virtual
   // folders count as none.
-  const folders = path.length > 1 && !current.virtual ? total.folders - 1 : total.folders;
+  const folders = current.virtual || current.id === currentTree().id ? total.folders : total.folders - 1;
   $('counts').textContent =
     `${formatCount(current.children.length)} items · ${formatCount(total.files)} files · ${formatCount(folders)} folders`;
   $('description').textContent = current.description ?? '';
   $('description').hidden = !current.description;
-  $('total-bytes').textContent = formatBytes(total.bytes);
+  // The account's total is what is used: its free space is not.
+  const free = current.id === ACCOUNT_ID ? current.children.find((c) => c.kind === 'free')?.usage.bytes ?? 0 : 0;
+  $('total-bytes').textContent = formatBytes(total.bytes - free);
   $('spinner').hidden = !state.loading;
+  const trash = state.includeTrashed ? 'trash included' : 'trash excluded';
+  const limit = state.quota?.limit ? Number(state.quota.limit) : null;
   $('caption').textContent = state.loading
     ? `listing… ${formatCount(state.files.length)} items so far`
-    : state.includeTrashed ? 'owned by you, trash included' : 'owned by you, trash excluded';
+    : current.id === ACCOUNT_ID
+      ? `used${limit ? ` of ${formatBytes(limit)}` : ''}, Drive's ${trash}`
+      : `owned by you, ${trash}`;
+  // The account toggles, when the quota tells what they would show.
+  const { mail, free: freeBytes } = accountBytes(state.quota);
+  $('mail-toggle').hidden = !(mail > 0);
+  $('free-toggle').hidden = !(freeBytes > 0);
+  $('show-mail').checked = state.showMail;
+  $('show-free').checked = state.showFree;
   $('quota').textContent = state.quota ? quotaText(state.quota) : '';
   $('show-trashed').checked = state.includeTrashed;
   $('shallow').checked = state.shallow;
@@ -333,7 +382,9 @@ function quotaText({ limit, usage, usageInDrive }) {
 
 /** Stacked bar of bytes per file category, largest first, with its legend. */
 function renderKinds() {
-  const kinds = Object.entries(scan.bytesByKind).filter(([, b]) => b > 0).sort((a, b) => b[1] - a[1]);
+  // Largest first, but the free space last: it is what is left, not a use.
+  const kinds = Object.entries(scan.bytesByKind).filter(([, b]) => b > 0)
+    .sort((a, b) => (a[0] === 'free') - (b[0] === 'free') || b[1] - a[1]);
   const total = Math.max(1, kinds.reduce((s, [, b]) => s + b, 0));
   const bar = $('kind-bar');
   const legend = $('kind-legend');
@@ -342,10 +393,12 @@ function renderKinds() {
   for (const [kind, bytes] of kinds) {
     const segment = el('div', { title: KIND_LABELS[kind] });
     segment.style.width = `${(100 * bytes) / total}%`;
-    segment.style.background = KIND_COLORS[kind];
+    segment.style.background = kind === 'free' ? 'none' : KIND_COLORS[kind];
+    segment.classList.toggle('free', kind === 'free');
     segment.dataset.kind = kind;
     const dot = el('span', { className: 'dot' });
-    dot.style.background = KIND_COLORS[kind];
+    dot.style.background = kind === 'free' ? 'none' : KIND_COLORS[kind];
+    dot.classList.toggle('free', kind === 'free');
     const entry = el('span');
     entry.dataset.kind = kind;
     entry.append(dot, KIND_LABELS[kind], ' ', formatBytes(bytes));
@@ -385,7 +438,10 @@ function layout() {
   const width = Math.floor(box.width);
   const height = Math.floor(box.height);
   const dpr = window.devicePixelRatio || 1;
-  const key = [state.revision, state.includeTrashed, state.shallow, state.zoom.join('/'), width, height, dpr].join('|');
+  const key = [
+    state.revision, state.includeTrashed, state.shallow, state.zoom.join('/'), state.accountView, state.showMail,
+    state.showFree, JSON.stringify(state.quota), width, height, dpr,
+  ].join('|');
   if (key === layoutKey) return;
   layoutKey = key;
   canvas.width = Math.round(width * dpr);
@@ -425,6 +481,14 @@ function draw() {
   tiles.forEach((tile, index) => {
     if (tile.isLeaf) {
       if (tile.bytes <= 0) return;
+      if (tile.kind === 'free') {
+        // Free space: an empty, dashed outline.
+        context.save();
+        context.setLineDash([6, 4]);
+        strokeInside(tile, 'rgba(255, 255, 255, 0.35)');
+        context.restore();
+        return;
+      }
       const [from, to] = gradientFor(tile);
       const gradient = context.createLinearGradient(tile.x, tile.y, tile.x + tile.w, tile.y + tile.h);
       gradient.addColorStop(0, from);
@@ -563,6 +627,8 @@ function clickAction(index) {
   if (index == null) return null;
   const top = tiles[topLevelIndex(index)];
   if (top.isDirectory && top.node) return () => zoomTo(top.node);
+  // The account's blocks: Gmail & Photos opens Google One, the free space does nothing.
+  if (top.node?.virtual) return top.node.link ? () => window.open(top.node.link, '_blank', 'noopener') : null;
   const folder = top.smallFiles === 0 && top.node && folderLinkOf(top.node);
   return folder ? () => window.open(folder, '_blank', 'noopener') : null;
 }
@@ -585,6 +651,14 @@ $('show-trashed').addEventListener('change', (event) => {
   storage.set('includeTrashed', state.includeTrashed);
   render();
 });
+
+for (const [id, key] of [['show-mail', 'showMail'], ['show-free', 'showFree']]) {
+  $(id).addEventListener('change', (event) => {
+    state[key] = event.target.checked;
+    storage.set(key, state[key]);
+    render();
+  });
+}
 
 $('shallow').addEventListener('change', (event) => {
   state.shallow = event.target.checked;

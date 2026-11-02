@@ -8,9 +8,19 @@ test('a walk through the demo drive', async ({ page }) => {
   await expect(page.locator('#welcome')).toBeVisible();
   await page.getByRole('button', { name: 'Try with demo data' }).click();
 
-  // Header: the drive, its total and counts; the account bar says it is the demo.
+  // It opens on the Google account: My Drive, Gmail & Photos and the free space.
   await expect(page.locator('#panel')).toBeVisible();
   await expect(page.locator('#demo-badge')).toBeVisible();
+  await expect(page.locator('#crumbs .current')).toHaveText('Google account');
+  await expect(page.locator('#caption')).toHaveText(/^used of 100 GB/);
+  for (const label of ['Gmail & Photos', 'Free space']) {
+    await expect(page.locator('#kind-legend [data-kind]').filter({ hasText: label })).toHaveCount(1);
+  }
+  // Without them, My Drive alone.
+  await page.getByLabel('Gmail & Photos').uncheck();
+  await page.getByLabel('Free space').uncheck();
+
+  // Header: the drive, its total and counts; the account bar says it is the demo.
   await expect(page.locator('#crumbs .current')).toHaveText('My Drive');
   await expect(page.locator('#total-bytes')).toHaveText(SIZE);
   await expect(page.locator('#counts')).toHaveText(/^\d+ items · [\d,]+ files · \d+ folders$/);

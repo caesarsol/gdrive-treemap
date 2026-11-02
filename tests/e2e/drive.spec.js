@@ -80,7 +80,8 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
 
   // Folders first, then both pages of files, every request with the token.
   await expect(page.locator('#panel')).toBeVisible();
-  await expect(page.locator('#caption')).toHaveText('owned by you, trash included');
+  // Listed (no longer 'listing…'), on the account level.
+  await expect(page.locator('#caption')).toHaveText("used of 15 GB, Drive's trash included");
   expect(pageTokens).toEqual(['folders null', 'files null', 'files page-2']);
   expect(authorizations.length).toBe(6);
   expect(new Set(authorizations)).toEqual(new Set(['Bearer test-token']));
@@ -91,6 +92,18 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   await expect(page.locator('#quota')).toHaveText('In Drive 4.95 GB · Gmail & Photos 3 GB · 7.95 GB of 15 GB used');
   await expect(page.locator('#demo-badge')).toBeHidden();
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
+  // The account level: My Drive, Gmail & Photos (3 GB) and the free space (7.05 GB, not counted).
+  await expect(page.locator('#crumbs .current')).toHaveText('Google account');
+  await expect(page.locator('#total-bytes')).toHaveText('7.95 GB');
+  await expect(page.locator('#caption')).toHaveText("used of 15 GB, Drive's trash included");
+  expect(await findTile(page, { name: 'Gmail & Photos', folders: '' })).not.toBeNull();
+  await expect(page.locator('#status-detail')).toHaveText('3 GB');
+  expect(await findTile(page, { name: 'Free space', folders: '' })).not.toBeNull();
+  await expect(page.locator('#status-detail')).toHaveText('7.05 GB');
+  // Into My Drive.
+  const myDrive = await findTile(page, { name: 'My Drive', folders: '' });
+  await page.mouse.click(myDrive.x, myDrive.y);
+  await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['Google account', 'My Drive']);
   await expect(page.locator('#total-bytes')).toHaveText('4.95 GB');
   // Projects, report.pdf, old.zip, Elsewhere and Notes; the folders are Projects and Sub (Elsewhere
   // is the app's, not Drive's).
@@ -119,7 +132,7 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   // Clicking a file inside a folder enters the folder; Escape comes back.
   const video = await findTile(page, { name: 'video.mp4', folders: 'Projects/' });
   await page.mouse.click(video.x, video.y);
-  await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['My Drive', 'Projects']);
+  await expect(page.locator('#crumbs > button, #crumbs > .current')).toHaveText(['Google account', 'My Drive', 'Projects']);
   await page.keyboard.press('Escape');
   await expect(page.locator('#crumbs .current')).toHaveText('My Drive');
 
@@ -146,7 +159,8 @@ test('signing in with Google and browsing the drive', async ({ page, context }) 
   const before = authorizations.length;
   await page.reload();
   await expect(page.locator('#panel')).toBeVisible();
-  await expect(page.locator('#total-bytes')).toHaveText('4.7 GB'); // the trash is still left out
+  // Back on the account level, the trash still left out of Drive: 4.7 GB + 3 GB.
+  await expect(page.locator('#total-bytes')).toHaveText('7.7 GB');
   expect(authorizations.length).toBeGreaterThan(before);
   expect(new Set(authorizations)).toEqual(new Set(['Bearer test-token']));
 

@@ -67,12 +67,13 @@ const BY_KIND = {
 
 /** Every icon name the app may draw: scripts/icons.mjs vendors exactly these. */
 export const ICON_NAMES = [...new Set([
-  'folder', 'folder-user', 'folder-dashed', ...Object.values(BY_EXTENSION), ...Object.values(BY_MIME), ...Object.values(BY_KIND),
+  'folder', 'folder-user', 'folder-dashed', 'envelope-simple', 'circle-dashed', ...Object.values(BY_EXTENSION), ...Object.values(BY_MIME), ...Object.values(BY_KIND),
 ])].sort();
 
 /** The icon for a tree node: its type's, or a folder: someone else's for Elsewhere and its shared
  * folders, a dashed one for "No folder". */
 export function iconName(node) {
+  if (node.icon) return node.icon;
   if (node.isDirectory) return node.virtual ? (node.id === '__no-folder__' ? 'folder-dashed' : 'folder-user') : 'folder';
   const name = node.name ?? '';
   const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '';

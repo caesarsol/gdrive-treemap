@@ -1,10 +1,12 @@
 // File categories and colours, after quicker-look's FileKind (UTType rules there, MIME types here).
 
-export const KINDS = ['image', 'video', 'audio', 'archive', 'code', 'document', 'other'];
+export const KINDS = ['image', 'video', 'audio', 'archive', 'code', 'document', 'other', 'mail', 'free'];
 
 export const KIND_LABELS = {
   image: 'Images', video: 'Videos', audio: 'Audio', archive: 'Archives',
   code: 'Code', document: 'Documents', other: 'Other',
+  // Not files: the account's other uses of its storage, and what is left.
+  mail: 'Gmail & Photos', free: 'Free space',
 };
 
 // macOS dark-appearance system colours, as the Quick Look panel draws them.
@@ -16,6 +18,8 @@ export const KIND_COLORS = {
   code: '#ffd60a', // systemYellow
   document: '#30d158', // systemGreen
   other: '#b3b3b3', // white 0.7
+  mail: '#ff453a', // systemRed
+  free: '#5a5a5a', // drawn as a dashed outline, not filled
 };
 
 // Azure is reserved for folders (borders, and blocks too small to subdivide): no file colour is blue.
@@ -59,7 +63,8 @@ const matches = (mime, prefixes) => prefixes.some((p) => mime.startsWith(p));
 const kindCache = new Map();
 
 /** Category of a Drive file, from its MIME type with the extension as a fallback. Memoised. */
-export function fileKind({ name = '', mimeType = '' }) {
+export function fileKind({ name = '', mimeType = '', kind: given }) {
+  if (given) return given;
   const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '';
   const key = `${mimeType}|${ext}`;
   let kind = kindCache.get(key);

@@ -93,7 +93,7 @@ a { color: var(--accent); }
 .crumbs .open { font-size: 12px; font-weight: 400; margin-left: 6px; text-decoration: none; }
 .crumbs .open:hover { text-decoration: underline; }
 .description { font-size: 12px; max-width: 60ch; }
-.toggles { display: flex; gap: 16px; font-size: 12px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; }
 .toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
 .toggles input { margin: 0; }
 
@@ -113,6 +113,8 @@ a { color: var(--accent); }
 .kind-bar { display: flex; height: 14px; overflow: hidden; }
 .kind-bar div { height: 100%; }
 .kind-bar div.hovered, .kind-legend .hovered .dot { box-shadow: inset 0 0 0 2px white; }
+.kind-legend .dot.free { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
+.kind-bar div.free { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
 .kind-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--secondary); }
 .kind-legend > span { display: flex; align-items: center; gap: 5px; white-space: nowrap; cursor: default; }
 .kind-legend .hovered { color: var(--text); }
